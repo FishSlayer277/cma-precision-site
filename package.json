@@ -1,0 +1,5 @@
+{
+  "name": "cma-precision-site",
+  "private": true,
+  "dependencies": { "stripe": "^16.0.0" }
+}
