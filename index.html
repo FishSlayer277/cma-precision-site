@@ -258,6 +258,27 @@ h2 { font-family: var(--f-display); font-weight: 800; text-transform: uppercase;
 .facts dt { font: 500 11px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .facts dd { margin: 2px 0 0; font-family: var(--f-display); font-weight: 700; font-size: 20px; }
 .about .credit { color: var(--muted); font-size: 14px; }
+.order-card { max-width: 760px; margin: 0 auto; display: grid; gap: 18px; }
+.order-head { display: flex; gap: 18px; align-items: center; }
+.order-head .ink-skull { flex: none; width: 34px; height: 92px; background: var(--brass); }
+.order-head div { display: grid; gap: 6px; min-width: 0; }
+.ov-loading { color: var(--muted); padding: 14px 16px; background: var(--surface); border: 1px dashed var(--line); border-radius: 6px; }
+.ov-meta { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px 20px; }
+.ov-meta div { border-top: 2px solid var(--brass); padding-top: 8px; min-width: 0; }
+.ov-meta dt { font: 500 11px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.ov-meta dd { margin: 2px 0 0; font-family: var(--f-display); font-weight: 700; font-size: 19px; overflow-wrap: anywhere; }
+.ov-grid { margin-top: 18px; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; }
+.ov-items { list-style: none; margin: 0; padding: 0; }
+.ov-items li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 15px; font-variant-numeric: tabular-nums; }
+.ov-totals { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+.ov-totals td { padding: 4px 0; color: var(--muted); }
+.ov-totals td:last-child { text-align: right; color: var(--ink); }
+.ov-totals .grand td { padding-top: 8px; font-family: var(--f-display); font-weight: 800; font-size: 20px; color: var(--ink); }
+.ov-totals .grand td:last-child { color: var(--brass); }
+.ov-addr { background: var(--brass-soft); border-radius: 4px; padding: 12px 14px; line-height: 1.5; }
+.ov-steps { margin: 0; padding-left: 20px; display: grid; gap: 8px; max-width: 62ch; }
+.ov-steps a { color: var(--brass); }
+@media (max-width: 640px) { .ov-grid { grid-template-columns: 1fr; } }
 .gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; width: 100%; }
 .gallery figure { margin: 0; display: grid; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 18px; }
 .gallery .ink-reaper { width: 100%; aspect-ratio: 620 / 579; }
@@ -291,7 +312,6 @@ footer .wrap { padding-block: 22px; font-size: 13px; color: var(--muted); displa
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
 </style>
 
-<div class="thanks" id="thanks" role="status" hidden><div class="wrap"><span>Thank you for your order! A receipt is on its way to your email, and I'll get your gear printed and shipped.</span><button type="button" id="thanks-close">Dismiss</button></div></div>
 </head>
 <body>
 <header class="top">
@@ -403,6 +423,47 @@ footer .wrap { padding-block: 22px; font-size: 13px; color: var(--muted); displa
         <p class="credit">CMA Precision artwork by <a class="artlink" href="#artist">Akoye</a>, a local Utah artist.</p>
         <a class="buy" href="#shop">Shop the bench gear</a>
       </div>
+    </div>
+  </div>
+</section>
+
+<section class="about orderview" id="orderview" hidden>
+  <div class="wrap">
+    <div class="order-card">
+      <div class="order-head">
+        <span class="ink-skull" aria-hidden="true"></span>
+        <div>
+          <span class="cat" id="ov-kicker">Order confirmed</span>
+          <h1 id="ov-title">Thank you for your order!</h1>
+          <p class="lede" id="ov-sub">Your payment went through. A receipt from Stripe is on its way to your email.</p>
+        </div>
+      </div>
+      <div class="ov-loading" id="ov-loading">Loading your order details…</div>
+      <div id="ov-details" hidden>
+        <dl class="ov-meta">
+          <div><dt>Order number</dt><dd id="ov-no"></dd></div>
+          <div><dt>Placed</dt><dd id="ov-date"></dd></div>
+          <div><dt>Receipt sent to</dt><dd id="ov-email"></dd></div>
+        </dl>
+        <div class="ov-grid">
+          <div>
+            <h2>Your items</h2>
+            <ul class="ov-items" id="ov-items"></ul>
+            <table class="ov-totals" id="ov-totals"></table>
+          </div>
+          <div>
+            <h2>Shipping to</h2>
+            <p class="ov-addr" id="ov-addr"></p>
+          </div>
+        </div>
+      </div>
+      <h2>What happens next</h2>
+      <ol class="ov-steps">
+        <li><b>Printing.</b> Your order is printed in a small, carefully crafted batch. In-stock items ship within 24–48 hours; printed-to-order items take 2–5 business days.</li>
+        <li><b>Shipping.</b> Your gear ships from Utah by USPS.</li>
+        <li><b>Questions?</b> Email <a href="mailto:cmaprecision27@gmail.com">cmaprecision27@gmail.com</a><span id="ov-ref"></span>. Returns and exchanges are accepted within 30 days.</li>
+      </ol>
+      <div class="viewlinks"><a class="buy" href="#shop">Continue shopping</a><a class="close" href="#about">About CMA Precision</a></div>
     </div>
   </div>
 </section>
@@ -878,7 +939,7 @@ document.getElementById("revwall").innerHTML = reviews.map(r => `
 
 /* Page views (shop, about, artist), driven by the link's #anchor */
 const shopView = document.getElementById("shopview");
-const views = { "#about": document.getElementById("aboutview"), "#artist": document.getElementById("artistview") };
+const views = { "#about": document.getElementById("aboutview"), "#artist": document.getElementById("artistview"), "#order": document.getElementById("orderview") };
 function route() {
   const page = views[location.hash] ? location.hash : null;
   for (const k in views) views[k].hidden = k !== page;
@@ -959,13 +1020,39 @@ let tx = null;
 lbImg.addEventListener("touchstart", e => { tx = e.touches[0].clientX; }, { passive: true });
 lbImg.addEventListener("touchend", e => { if (tx === null) return; const dx = e.changedTouches[0].clientX - tx; if (Math.abs(dx) > 40) showPhoto(lbIdx + (dx < 0 ? 1 : -1)); tx = null; });
 
-/* Returning from a paid Stripe checkout */
-if (new URLSearchParams(location.search).get("order") === "success") {
+/* Returning from a paid Stripe checkout: show the order confirmation page */
+(function () {
+  const q = new URLSearchParams(location.search);
+  if (q.get("order") !== "success") return;
+  const sid = q.get("session_id") || "";
   cart = {}; saveCart(); renderCart();
-  document.getElementById("thanks").hidden = false;
-  history.replaceState(null, "", location.pathname + location.hash);
-}
-document.getElementById("thanks-close").addEventListener("click", () => { document.getElementById("thanks").hidden = true; });
+  history.replaceState(null, "", location.pathname + "#order");
+  route();
+  const loading = document.getElementById("ov-loading");
+  if (!/^cs_(live|test)_/.test(sid)) { loading.hidden = true; return; }
+  const cents = c => money((c || 0) / 100);
+  fetch("/.netlify/functions/order-status?session_id=" + encodeURIComponent(sid))
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(o => {
+      const first = (o.name || "").trim().split(/\s+/)[0];
+      if (first) document.getElementById("ov-title").textContent = `Thank you, ${first}!`;
+      document.getElementById("ov-no").textContent = o.orderNo;
+      document.getElementById("ov-ref").textContent = ` and mention order ${o.orderNo}`;
+      document.getElementById("ov-date").textContent = new Date(o.created * 1000).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+      document.getElementById("ov-email").textContent = o.email || "your email";
+      document.getElementById("ov-items").innerHTML = o.items.map(i => `<li><span><b>${i.qty} ×</b> ${esc(i.name)}</span><span>${cents(i.total)}</span></li>`).join("");
+      const row = (l, v, cls) => `<tr${cls ? ` class="${cls}"` : ""}><td>${l}</td><td>${v}</td></tr>`;
+      document.getElementById("ov-totals").innerHTML =
+        row("Subtotal", cents(o.subtotal)) +
+        row("Shipping", o.shipping ? cents(o.shipping) : "Free") +
+        (o.discount ? row("Discount", "−" + cents(o.discount)) : "") +
+        (o.tax ? row("Sales tax", cents(o.tax)) : "") +
+        row("Total paid", cents(o.total), "grand");
+      document.getElementById("ov-addr").innerHTML = o.shipTo.map(esc).join("<br>");
+      loading.hidden = true; document.getElementById("ov-details").hidden = false;
+    })
+    .catch(() => { loading.textContent = "Your order is confirmed. Your receipt email has the full details."; });
+})();
 </script>
 <style>
 /* Commissioned artwork, drawn as ink in the theme's text color */

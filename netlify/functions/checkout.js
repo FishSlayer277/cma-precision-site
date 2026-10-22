@@ -80,7 +80,7 @@ exports.handler = async (event) => {
       custom_text: {
         submit: { message: "Printed in small batches in Utah. In-stock orders ship in 24–48 hours; printed-to-order items take 2–5 business days." }
       },
-      success_url: site + "/?order=success",
+      success_url: site + "/?order=success&session_id={CHECKOUT_SESSION_ID}",
       cancel_url: site + "/"
     });
     return json(200, { url: session.url });
