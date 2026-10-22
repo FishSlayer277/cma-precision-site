@@ -818,11 +818,12 @@ document.getElementById("checkout").addEventListener("click", async () => {
   try {
     const res = await fetch(CHECKOUT_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items }) });
     if (res.status === 404) { etsyNote(); btn.disabled = false; btn.textContent = "Check out"; return; }
-    const data = await res.json();
-    if (!res.ok || !data.url) throw new Error(data.error || "Checkout could not start");
+    let data = {};
+    try { data = await res.json(); } catch (e) { data = { error: `The checkout service answered with error ${res.status}.` }; }
+    if (!res.ok || !data.url) throw new Error(data.error || `Checkout could not start (error ${res.status}).`);
     location.href = data.url;
   } catch (err) {
-    msg.textContent = "Checkout didn't open. Check your connection and try again.";
+    msg.textContent = err && err.message && !/Failed to fetch|NetworkError|Load failed/i.test(err.message) ? "Checkout didn't open. " + err.message : "Checkout didn't open. Check your connection and try again.";
     msg.hidden = false; btn.disabled = false; btn.textContent = "Check out";
   }
 });

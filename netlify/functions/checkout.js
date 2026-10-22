@@ -3,7 +3,6 @@
 // Setup: in Netlify, add the environment variable STRIPE_SECRET_KEY. No Stripe products are needed:
 // each item's name and price are sent from the list below.
 const Stripe = require("stripe");
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
 // ---- Shop settings (amounts are in cents) ----
 const SHIPPING_CENTS = 500;        // flat shipping charge: 500 = $5.00
@@ -35,6 +34,10 @@ const json = (statusCode, body) => ({ statusCode, headers: { "Content-Type": "ap
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { error: "Use POST" });
+  const key = (process.env.STRIPE_SECRET_KEY || "").trim();
+  if (!key) return json(500, { error: "Payments aren't set up: STRIPE_SECRET_KEY is missing in Netlify." });
+  if (!/^(sk|rk)_(live|test)_/.test(key)) return json(500, { error: "Payments aren't set up: STRIPE_SECRET_KEY should start with sk_live_ (or rk_live_)." });
+  const stripe = Stripe(key);
   let items = [];
   try { items = JSON.parse(event.body || "{}").items || []; } catch (e) {}
 
@@ -83,6 +86,7 @@ exports.handler = async (event) => {
     return json(200, { url: session.url });
   } catch (err) {
     console.error(err);
-    return json(500, { error: "Checkout could not start." });
+    // Stripe's message explains the problem (it never contains your key)
+    return json(500, { error: "Stripe said: " + (err && err.message ? err.message : "unknown error") });
   }
 };
