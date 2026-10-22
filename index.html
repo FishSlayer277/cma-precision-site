@@ -118,6 +118,17 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 button.buy { border: 0; cursor: pointer; }
 button.buy:disabled { opacity: .45; cursor: not-allowed; }
 .buy.added { background: var(--ink); color: var(--bg); }
+.buyctl { display: flex; justify-content: flex-end; min-width: 0; }
+.stepper { display: inline-flex; align-items: stretch; height: 40px; border: 2px solid var(--brass); border-radius: 4px; overflow: hidden; background: var(--surface); }
+.stepper button { width: 38px; border: 0; background: var(--brass-soft); color: var(--brass); font: 600 20px/1 var(--f-body); cursor: pointer; display: grid; place-items: center; touch-action: manipulation; }
+.stepper button:hover { background: var(--brass); color: #fff; }
+.stepper button:disabled { opacity: .35; cursor: not-allowed; }
+.stepper button:disabled:hover { background: var(--brass-soft); color: var(--brass); }
+.stepper .qn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; padding-inline: 8px; font: 500 13px var(--f-body); color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.stepper .qn b { color: var(--ink); font-size: 16px; }
+@keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
+.cartbtn.bump { animation: bump .35s ease-out; }
+@media (prefers-reduced-motion: reduce) { .cartbtn.bump { animation: none; } }
 .tile { padding: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
 .tile:hover { border-color: var(--brass); }
 .tile:hover .shopcat { text-decoration: underline; }
@@ -174,7 +185,10 @@ button.art { border: 0; padding: 0; width: 100%; cursor: pointer; font: inherit;
 .lb-info .fit { font-size: 14.5px; }
 .lb-sub { margin: 4px 0 0; font: 600 12px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .lb-list { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14.5px; }
-.lb-add { width: 100%; padding: 13px; font-size: 15px; }
+.lb-buyctl .buy, .lb-buyctl .stepper { width: 100%; }
+.lb-buyctl .buy { padding: 13px; font-size: 15px; }
+.lb-buyctl .stepper { height: 48px; }
+.lb-buyctl .stepper button { width: 52px; font-size: 22px; }
 .lb-art { position: absolute; inset: 0; display: grid; place-items: center; }
 .lb-art svg { width: 55%; }
 @media (max-width: 720px) {
@@ -436,7 +450,7 @@ footer .wrap { padding-block: 22px; font-size: 13px; color: var(--muted); displa
       <div id="lb-details"></div>
       <div class="shipnote"><b>Shipping:</b> Orders are printed in small, carefully crafted batches to ensure maximum quality, and I keep a limited inventory. <b>In stock:</b> ships in 24–48 hours. <b>Printed to order:</b> allow 2–5 business days to print and ship.</div>
       <p class="note">Returns and exchanges accepted within 30 days.</p>
-      <button class="buy add lb-add" id="lb-add" type="button">Add to cart</button>
+      <div class="buyctl lb-buyctl" id="lb-ctl"></div>
     </div>
   </div>
 </div>
@@ -694,7 +708,7 @@ function renderGrid() {
         <h3><button type="button" class="titlelink" data-gallery="${p.id}">${esc(p.name)}</button></h3>
         <p class="fit"><b>Fits:</b> ${esc(p.fit)}</p>
         <button type="button" class="viewlink" data-gallery="${p.id}">View details</button>
-        <div class="buyrow"><span class="price">${money(p.price)}</span><button class="buy add" type="button" data-id="${p.id}">Add to cart</button></div>
+        <div class="buyrow"><span class="price">${money(p.price)}</span><div class="buyctl" data-id="${p.id}">${ctlHTML(p.id)}</div></div>
       </div>
     </article>`).join("");
 }
@@ -714,11 +728,39 @@ grid.addEventListener("click", e => {
   if (t) { active = t.dataset.tile; renderChips(); renderGrid(); document.getElementById("shop").scrollIntoView({ block: "start" }); return; }
   const g = e.target.closest("[data-gallery]");
   if (g) { openGallery(g.dataset.gallery); return; }
-  const b = e.target.closest(".add"); if (!b) return;
-  addToCart(b.dataset.id);
-  b.textContent = "Added ✓"; b.classList.add("added");
-  setTimeout(() => { b.textContent = "Add to cart"; b.classList.remove("added"); }, 1200);
 });
+
+/* Add to cart turns into a quantity stepper (− 2 +) once the item is in the cart */
+var cartReady = false;
+function qtyOf(id) { return cartReady && cart[id] ? cart[id] : 0; }
+function ctlHTML(id) {
+  const n = qtyOf(id);
+  if (!n) return `<button class="buy add" type="button" data-act="add">Add to cart</button>`;
+  return `<div class="stepper" role="group" aria-label="Quantity in cart">
+    <button type="button" data-act="minus" aria-label="${n === 1 ? "Remove from cart" : "One fewer"}">${n === 1 ? trashIcon : "−"}</button>
+    <span class="qn" aria-live="polite"><b>${n}</b> in cart</span>
+    <button type="button" data-act="plus" aria-label="One more"${n >= 20 ? " disabled" : ""}>+</button>
+  </div>`;
+}
+const trashIcon = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function refreshCtls() {
+  document.querySelectorAll(".buyctl").forEach(el => {
+    const html = ctlHTML(el.dataset.id);
+    if (el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html; }
+  });
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest(".buyctl [data-act]"); if (!b) return;
+  const id = b.closest(".buyctl").dataset.id, n = qtyOf(id), act = b.dataset.act;
+  const focusAfter = act;
+  if (act === "add" || act === "plus") addToCart(id); else setQty(id, n - 1);
+  if (act === "add") bumpCart();
+  const keep = document.querySelector(`.buyctl[data-id="${id}"] [data-act="${focusAfter === "add" ? "plus" : focusAfter}"]`) || document.querySelector(`.buyctl[data-id="${id}"] [data-act="add"]`);
+  if (keep && e.detail === 0) keep.focus();
+});
+function bumpCart() {
+  const c = document.getElementById("cart-open"); c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump");
+}
 renderChips(); renderGrid();
 
 /* Cart: one checkout for everything. Remembered in this browser only. */
@@ -733,6 +775,7 @@ function saveCart() { try { localStorage.setItem("cma-cart", JSON.stringify(cart
 function addToCart(id) { cart[id] = Math.min((cart[id] || 0) + 1, 20); saveCart(); renderCart(); }
 function setQty(id, q) { if (q <= 0) delete cart[id]; else cart[id] = Math.min(q, 20); saveCart(); renderCart(); }
 function renderCart() {
+  cartReady = true; refreshCtls();
   const ids = Object.keys(cart);
   const count = ids.reduce((n, id) => n + cart[id], 0);
   const sub = ids.reduce((t, id) => t + byId[id].price * cart[id], 0);
@@ -884,7 +927,7 @@ function openGallery(id) {
   const d = details[id];
   document.getElementById("lb-details").innerHTML = d ? `<h3 class="lb-sub">${/Pedestal|Rack|Pen|Organizer/.test(p.name) ? "Details" : "What it holds"}</h3><ul class="lb-list">${d.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "";
   const lbArt = document.getElementById("lb-art"); lbArt.innerHTML = art[p.art]; lbArt.hidden = false;
-  document.getElementById("lb-add").dataset.id = id;
+  const ctl = document.getElementById("lb-ctl"); ctl.dataset.id = id; ctl.innerHTML = ctlHTML(id);
   const multi = lbN > 1;
   document.getElementById("lb-prev").hidden = !multi; document.getElementById("lb-next").hidden = !multi;
   document.getElementById("lb-count").hidden = !multi;
@@ -899,11 +942,6 @@ lbImg.addEventListener("error", () => {
   const t = nextTry(lbImg);
   if (t <= 2) { const alt = etsySrc(lbId, lbIdx, t); if (alt) { lbImg.src = alt; return; } }
   document.getElementById("lb-art").hidden = false; lbImg.hidden = true; document.getElementById("lb-count").hidden = true; document.getElementById("lb-prev").hidden = true; document.getElementById("lb-next").hidden = true; });
-document.getElementById("lb-add").addEventListener("click", e => {
-  const b = e.currentTarget; addToCart(b.dataset.id);
-  b.textContent = "Added ✓"; b.classList.add("added");
-  setTimeout(() => { b.textContent = "Add to cart"; b.classList.remove("added"); }, 1200);
-});
 document.getElementById("lb-close").addEventListener("click", closeGallery);
 document.getElementById("lb-prev").addEventListener("click", () => showPhoto(lbIdx - 1));
 document.getElementById("lb-next").addEventListener("click", () => showPhoto(lbIdx + 1));
