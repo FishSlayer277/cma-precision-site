@@ -1,5 +1,8 @@
 {
   "name": "cma-precision-site",
   "private": true,
-  "dependencies": { "stripe": "^16.0.0" }
+  "dependencies": {
+    "stripe": "^16.0.0",
+    "@netlify/blobs": "^7.0.0"
+  }
 }

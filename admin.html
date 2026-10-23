@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>CMA Shop Settings</title>
+<link rel="manifest" href="/admin.webmanifest">
+<meta name="theme-color" content="#8a0b0b">
+<link rel="icon" href="/icons/settings-192.png" type="image/png">
+<link rel="apple-touch-icon" href="/icons/settings-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pirata+One&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one phone-sized column, a big switch at the top, details below. */
+:root {
+  --bg: #0b0b0b; --surface: #161313; --ink: #f5f3f3; --muted: #a49c9c; --line: #2c2424;
+  --red: #c81818; --red-deep: #8a0b0b; --red-soft: #3a0f0f; --ok: #3fae6a;
+  --f-display: "Pirata One", "Old English Text MT", Georgia, serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--f-body);
+  padding: calc(16px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(28px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+main { max-width: 460px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font: 400 34px/1 var(--f-display); text-transform: uppercase; letter-spacing: .04em; margin: 6px 0 0; }
+h1 span { color: var(--red); }
+.sub { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; }
+.label { font: 500 11px var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.status { display: flex; align-items: center; gap: 12px; }
+.dot { width: 14px; height: 14px; border-radius: 50%; background: var(--ok); flex: none; box-shadow: 0 0 0 4px rgba(63, 174, 106, .18); }
+.status.on .dot { background: var(--red); box-shadow: 0 0 0 4px rgba(200, 24, 24, .22); }
+.status b { font-size: 20px; }
+.status p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 16px; cursor: pointer; user-select: none; }
+.switch strong { font-size: 18px; }
+.switch small { display: block; color: var(--muted); font-size: 13.5px; font-weight: 400; margin-top: 2px; }
+.switch input { position: absolute; opacity: 0; pointer-events: none; }
+.track { flex: none; width: 66px; height: 38px; border-radius: 999px; background: #3a3434; position: relative; transition: background .2s; }
+.track::after { content: ""; position: absolute; top: 4px; left: 4px; width: 30px; height: 30px; border-radius: 50%; background: #fff; transition: transform .2s; }
+.switch input:checked + .track { background: var(--red); }
+.switch input:checked + .track::after { transform: translateX(28px); }
+.switch input:focus-visible + .track { outline: 2px solid #fff; outline-offset: 3px; }
+label.field { display: grid; gap: 6px; font-weight: 600; font-size: 15px; }
+label.field span { font-weight: 400; color: var(--muted); font-size: 13px; }
+input[type=text], input[type=password], textarea {
+  width: 100%; font: 16px var(--f-body); color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 6px; padding: 11px 12px; }
+textarea { min-height: 92px; resize: vertical; }
+input:focus, textarea:focus { outline: 2px solid var(--red); outline-offset: 1px; border-color: transparent; }
+.save { width: 100%; border: 0; border-radius: 8px; padding: 15px; font: 600 17px var(--f-body); background: var(--red-deep); color: #fff; cursor: pointer; }
+.save:disabled { opacity: .5; cursor: wait; }
+.msg { margin: 0; padding: 11px 13px; border-radius: 6px; font-size: 14.5px; background: var(--red-soft); }
+.msg.good { background: rgba(63, 174, 106, .16); }
+.row { display: flex; gap: 10px; align-items: end; }
+.row > :first-child { flex: 1; min-width: 0; }
+.ghost { border: 1px solid var(--line); background: none; color: var(--ink); border-radius: 6px; padding: 11px 14px; font: 500 15px var(--f-body); cursor: pointer; white-space: nowrap; }
+.foot { color: var(--muted); font-size: 13px; text-align: center; }
+.foot a { color: var(--ink); }
+.locked .needs-pin { opacity: .45; pointer-events: none; }
+</style>
+</head>
+<body>
+<main id="app" class="locked">
+  <header>
+    <h1>CMA <span>Settings</span></h1>
+    <p class="sub">Shop controls for cmaprecision. Changes show on the website within about a minute.</p>
+  </header>
+
+  <section class="card" aria-live="polite">
+    <span class="label">Website right now</span>
+    <div class="status" id="status"><span class="dot"></span><div><b id="status-title">Checking…</b><p id="status-sub"></p></div></div>
+  </section>
+
+  <section class="card" id="pin-card">
+    <span class="label">Your PIN</span>
+    <div class="row">
+      <label class="field">PIN<input type="password" id="pin" inputmode="text" autocomplete="current-password" placeholder="The ADMIN_PIN you set in Netlify"></label>
+      <button class="ghost" id="unlock" type="button">Unlock</button>
+    </div>
+    <p class="msg" id="pin-msg" hidden></p>
+  </section>
+
+  <section class="card needs-pin">
+    <label class="switch" for="vacation">
+      <div><strong>Vacation mode</strong><small>Website checkout pauses. “Add to cart” becomes “Buy on Etsy” and opens that item’s Etsy listing.</small></div>
+      <input type="checkbox" id="vacation" role="switch">
+      <span class="track" aria-hidden="true"></span>
+    </label>
+    <label class="field">Message shown at the top of the website
+      <span>Keep it short. Leave as-is for the standard note.</span>
+      <textarea id="message" maxlength="300"></textarea>
+    </label>
+    <label class="field">Back on (optional)
+      <span>For example “December 1”. Added to the end of the message.</span>
+      <input type="text" id="returnDate" maxlength="40" placeholder="December 1">
+    </label>
+    <button class="save" id="save" type="button">Save changes</button>
+    <p class="msg" id="save-msg" hidden></p>
+  </section>
+
+  <p class="foot"><a href="/" target="_blank" rel="noopener">Open the website ↗</a></p>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const app = $("app");
+let pin = "";
+try { pin = localStorage.getItem("cma-admin-pin") || ""; } catch (e) {}
+$("pin").value = pin;
+
+function showStatus(st) {
+  const on = !!st.vacation;
+  $("status").classList.toggle("on", on);
+  $("status-title").textContent = on ? "Vacation mode is ON" : "Open for orders";
+  const when = st.updatedAt ? "Last changed " + new Date(st.updatedAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "Never changed";
+  $("status-sub").textContent = on ? "Buyers are sent to Etsy. " + when : "Website checkout is working. " + when;
+}
+function fill(st) {
+  $("vacation").checked = !!st.vacation;
+  $("message").value = st.message || "";
+  $("returnDate").value = st.returnDate || "";
+  showStatus(st);
+}
+function note(el, text, good) { el.textContent = text; el.classList.toggle("good", !!good); el.hidden = false; }
+
+async function post(body) {
+  const r = await fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  let data = {}; try { data = await r.json(); } catch (e) {}
+  if (!r.ok) throw new Error(data.error || "Something went wrong (error " + r.status + ").");
+  return data;
+}
+
+async function unlock() {
+  pin = $("pin").value.trim();
+  if (!pin) { note($("pin-msg"), "Type your PIN first."); return; }
+  $("unlock").disabled = true;
+  try {
+    const st = await post({ pin, check: true });
+    try { localStorage.setItem("cma-admin-pin", pin); } catch (e) {}
+    fill(st); app.classList.remove("locked");
+    note($("pin-msg"), "Unlocked. This phone will remember your PIN.", true);
+    setTimeout(() => { $("pin-msg").hidden = true; }, 2500);
+  } catch (err) {
+    app.classList.add("locked"); note($("pin-msg"), err.message);
+  } finally { $("unlock").disabled = false; }
+}
+
+$("unlock").addEventListener("click", unlock);
+$("pin").addEventListener("keydown", e => { if (e.key === "Enter") unlock(); });
+
+$("save").addEventListener("click", async () => {
+  const btn = $("save"); btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    const st = await post({ pin, vacation: $("vacation").checked, message: $("message").value, returnDate: $("returnDate").value });
+    fill(st);
+    note($("save-msg"), st.vacation ? "Saved. Vacation mode is ON. The website switches within about a minute." : "Saved. The shop is open. The website switches within about a minute.", true);
+  } catch (err) { note($("save-msg"), err.message); }
+  finally { btn.disabled = false; btn.textContent = "Save changes"; }
+});
+
+fetch("/api/settings", { cache: "no-cache" }).then(r => r.json()).then(st => { fill(st); }).catch(() => {
+  $("status-title").textContent = "Couldn't reach the website"; $("status-sub").textContent = "Check your connection and reopen this app.";
+});
+if (pin) unlock();
+</script>
+</body>
+</html>

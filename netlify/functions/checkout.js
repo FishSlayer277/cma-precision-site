@@ -57,6 +57,11 @@ exports.handler = async (event) => {
   const free = FREE_SHIPPING_OVER > 0 && subtotal >= FREE_SHIPPING_OVER;
 
   const site = process.env.URL || event.headers.origin;
+  // Vacation mode: don't take website orders (buyers are sent to Etsy instead)
+  try {
+    const st = await (await fetch(site + "/api/settings")).json();
+    if (st && st.vacation) return json(409, { error: "The website shop is on a break right now. Please order from our Etsy shop: etsy.com/shop/CMAprecision" });
+  } catch (e) { /* if settings can't be read, carry on */ }
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",

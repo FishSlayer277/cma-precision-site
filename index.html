@@ -118,6 +118,13 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 button.buy { border: 0; cursor: pointer; }
 button.buy:disabled { opacity: .45; cursor: not-allowed; }
 .buy.added { background: var(--ink); color: var(--bg); }
+.etsybuy { white-space: nowrap; }
+.vacation .cartbtn { display: none; }
+.vacbar { background: var(--brass); color: #fff; }
+.vacbar .wrap { padding-block: 10px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; font-weight: 600; font-size: 14.5px; }
+.vacbar span { min-width: 0; flex: 1 1 260px; }
+.vac-etsy { color: #fff; border: 1px solid rgba(255, 255, 255, .75); border-radius: 4px; padding: 6px 12px; text-decoration: none; white-space: nowrap; }
+.vac-etsy:hover { background: rgba(255, 255, 255, .15); }
 .buyctl { display: flex; justify-content: flex-end; min-width: 0; }
 .stepper { display: inline-flex; align-items: stretch; height: 40px; border: 2px solid var(--brass); border-radius: 4px; overflow: hidden; background: var(--surface); }
 .stepper button { width: 38px; border: 0; background: var(--brass-soft); color: var(--brass); font: 600 20px/1 var(--f-body); cursor: pointer; display: grid; place-items: center; touch-action: manipulation; }
@@ -312,6 +319,7 @@ footer .wrap { padding-block: 22px; font-size: 13px; color: var(--muted); displa
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
 </style>
 
+<div class="vacbar" id="vacbar" role="status" hidden><div class="wrap"><span id="vac-msg"></span><a class="vac-etsy" href="https://www.etsy.com/shop/CMAprecision" target="_blank" rel="noopener">Shop on Etsy ↗</a></div></div>
 </head>
 <body>
 <header class="top">
@@ -799,7 +807,9 @@ grid.addEventListener("click", e => {
 /* Add to cart turns into a quantity stepper (− 2 +) once the item is in the cart */
 var cartReady = false;
 function qtyOf(id) { return cartReady && cart[id] ? cart[id] : 0; }
+var VACATION = false;
 function ctlHTML(id) {
+  if (VACATION) return `<a class="buy etsybuy" href="https://www.etsy.com/listing/${id}" target="_blank" rel="noopener" aria-label="Buy ${esc((byId[id] || {}).name || "this item")} on Etsy">Buy on Etsy <span aria-hidden="true">↗</span></a>`;
   const n = qtyOf(id);
   if (!n) return `<button class="buy add" type="button" data-act="add">Add to cart</button>`;
   return `<div class="stepper" role="group" aria-label="Quantity in cart">
@@ -1057,6 +1067,25 @@ lbImg.addEventListener("touchend", e => { if (tx === null) return; const dx = e.
     })
     .catch(() => { loading.textContent = "Your order is confirmed. Your receipt email has the full details."; });
 })();
+
+/* Vacation mode: switched on from the shop settings page (/admin) without a redeploy */
+function applyVacation(st) {
+  VACATION = !!(st && st.vacation);
+  document.body.classList.toggle("vacation", VACATION);
+  const bar = document.getElementById("vacbar");
+  bar.hidden = !VACATION;
+  if (VACATION) {
+    let m = st.message || "The website shop is taking a short break. You can still order everything from our Etsy shop.";
+    if (st.returnDate) m += ` Website orders reopen ${st.returnDate}.`;
+    document.getElementById("vac-msg").textContent = m;
+    if (!drawer.hidden) closeCart();
+  }
+  document.querySelectorAll(".buyctl").forEach(el => { el.dataset.html = ""; });
+  refreshCtls();
+}
+if (location.protocol.startsWith("http") && !/claude|claudeusercontent/.test(location.hostname)) {
+  fetch("/api/settings", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).then(st => { if (st) applyVacation(st); }).catch(() => {});
+}
 </script>
 <style>
 /* Commissioned artwork, drawn as ink in the theme's text color */
