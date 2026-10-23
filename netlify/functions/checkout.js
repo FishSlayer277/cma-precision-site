@@ -5,13 +5,15 @@
 const Stripe = require("stripe");
 
 // ---- Shop settings (amounts are in cents) ----
-const SHIPPING_CENTS = 500;        // flat shipping charge: 500 = $5.00
-const FREE_SHIPPING_OVER = 2500;   // free shipping when items total this much: 2500 = $25.00 (0 = never free)
+// Prices and shipping below are DEFAULTS. John changes them from the CMA Settings app (/admin.html);
+// those saved settings always win over these numbers.
+const SHIPPING_CENTS = 500;        // default flat shipping: 500 = $5.00
+const FREE_SHIPPING_OVER = 2500;   // default free-shipping threshold: 2500 = $25.00
 const USE_STRIPE_TAX = false;      // true once Utah is added under Stripe Tax > Registrations
 const SHIP_DAYS = { min: 3, max: 9 }; // print/handling + USPS Ground Advantage transit, in business days
 
 // Product list: the website's product id -> name, price in cents, and photo shown at checkout.
-// Change a price here AND on the website (index.html) so they match.
+// Default prices; the CMA Settings app overrides them.
 const PRODUCTS = {
   "4328837116": { name: "Classic Die Block", cents: 750, image: "https://i.etsystatic.com/55332613/r/il/844b0e/7860356574/il_794xN.7860356574_qxzg.jpg" },
   "4509881976": { name: "Die Block for Lee Breech-Lock", cents: 750, image: "https://i.etsystatic.com/55332613/r/il/c202b6/8099005817/il_794xN.8099005817_de84.jpg" },
@@ -41,6 +43,18 @@ exports.handler = async (event) => {
   let items = [];
   try { items = JSON.parse(event.body || "{}").items || []; } catch (e) {}
 
+  const site = process.env.URL || event.headers.origin;
+  let st = {};
+  try { st = (await (await fetch(site + "/api/settings")).json()) || {}; } catch (e) { /* use defaults */ }
+  // Vacation mode: don't take website orders (buyers are sent to Etsy instead)
+  if (st.vacation) return json(409, { error: "The website shop is on a break right now. Please order from our Etsy shop: etsy.com/shop/CMAprecision" });
+  const prices = st.prices || {};
+  const cents = id => (Number.isInteger(prices[id]) && prices[id] >= 50 ? prices[id] : PRODUCTS[id].cents);
+  const ship = st.shipping || {};
+  const flat = Number.isInteger(ship.flatCents) && ship.flatCents >= 0 ? ship.flatCents : SHIPPING_CENTS;
+  const freeOn = ship.freeEnabled === undefined ? FREE_SHIPPING_OVER > 0 : !!ship.freeEnabled;
+  const freeOver = Number.isInteger(ship.freeOverCents) && ship.freeOverCents > 0 ? ship.freeOverCents : FREE_SHIPPING_OVER;
+
   const valid = items.filter(i => PRODUCTS[i.id] && Number.isInteger(i.qty) && i.qty > 0 && i.qty <= 20);
   if (!valid.length) return json(400, { error: "The cart is empty." });
 
@@ -48,20 +62,13 @@ exports.handler = async (event) => {
     quantity: i.qty,
     price_data: {
       currency: "usd",
-      unit_amount: PRODUCTS[i.id].cents,
+      unit_amount: cents(i.id),
       product_data: { name: PRODUCTS[i.id].name, images: [PRODUCTS[i.id].image] },
       ...(USE_STRIPE_TAX ? { tax_behavior: "exclusive" } : {})
     }
   }));
-  const subtotal = valid.reduce((t, i) => t + PRODUCTS[i.id].cents * i.qty, 0);
-  const free = FREE_SHIPPING_OVER > 0 && subtotal >= FREE_SHIPPING_OVER;
-
-  const site = process.env.URL || event.headers.origin;
-  // Vacation mode: don't take website orders (buyers are sent to Etsy instead)
-  try {
-    const st = await (await fetch(site + "/api/settings")).json();
-    if (st && st.vacation) return json(409, { error: "The website shop is on a break right now. Please order from our Etsy shop: etsy.com/shop/CMAprecision" });
-  } catch (e) { /* if settings can't be read, carry on */ }
+  const subtotal = valid.reduce((t, i) => t + cents(i.id) * i.qty, 0);
+  const free = (freeOn && subtotal >= freeOver) || flat === 0;
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -73,7 +80,7 @@ exports.handler = async (event) => {
         shipping_rate_data: {
           type: "fixed_amount",
           display_name: free ? "Free shipping (USPS)" : "Standard shipping (USPS)",
-          fixed_amount: { amount: free ? 0 : SHIPPING_CENTS, currency: "usd" },
+          fixed_amount: { amount: free ? 0 : flat, currency: "usd" },
           delivery_estimate: {
             minimum: { unit: "business_day", value: SHIP_DAYS.min },
             maximum: { unit: "business_day", value: SHIP_DAYS.max }

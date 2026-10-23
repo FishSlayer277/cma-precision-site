@@ -63,6 +63,24 @@ input:focus, textarea:focus { outline: 2px solid var(--red); outline-offset: 1px
 .foot { color: var(--muted); font-size: 13px; text-align: center; }
 .foot a { color: var(--ink); }
 .locked .needs-pin { opacity: .45; pointer-events: none; }
+.money { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; }
+.money:focus-within { outline: 2px solid var(--red); outline-offset: 1px; border-color: transparent; }
+.money span { padding-left: 12px; color: var(--muted); font-weight: 600; }
+.money input { border: 0; background: none; padding-left: 6px; }
+.money input:focus { outline: none; }
+.hint { margin: -4px 0 0; color: var(--muted); font-size: 13.5px; }
+.prices { display: grid; gap: 2px; }
+.prow { display: grid; grid-template-columns: minmax(0, 1fr) 112px; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.prow:last-child { border-bottom: 0; }
+.prow .nm { font-size: 14.5px; line-height: 1.3; }
+.prow .nm small { display: block; color: var(--muted); font-size: 12px; }
+.prow.changed .money { border-color: var(--red); }
+.prow.changed .nm small { color: var(--red); }
+.bulk { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
+.bulk span { flex-basis: 100%; }
+.bulk .money { width: 110px; }
+.bulk .ghost { padding: 10px 12px; }
+.free-off #freeOverField { opacity: .45; }
 </style>
 </head>
 <body>
@@ -104,6 +122,38 @@ input:focus, textarea:focus { outline: 2px solid var(--red); outline-offset: 1px
     <p class="msg" id="save-msg" hidden></p>
   </section>
 
+  <section class="card needs-pin">
+    <span class="label">Shipping</span>
+    <label class="field">Shipping charge per order
+      <span>What buyers pay for shipping. Type 0 for free shipping on everything.</span>
+      <div class="money"><span>$</span><input type="text" id="flat" inputmode="decimal" autocomplete="off"></div>
+    </label>
+    <label class="switch" for="freeOn">
+      <div><strong>Free shipping over an amount</strong><small>Orders at or above the amount below ship free.</small></div>
+      <input type="checkbox" id="freeOn" role="switch">
+      <span class="track" aria-hidden="true"></span>
+    </label>
+    <label class="field" id="freeOverField">Free shipping when the order is at least
+      <div class="money"><span>$</span><input type="text" id="freeOver" inputmode="decimal" autocomplete="off"></div>
+    </label>
+    <button class="save" id="saveShip" type="button">Save shipping</button>
+    <p class="msg" id="ship-msg" hidden></p>
+  </section>
+
+  <section class="card needs-pin">
+    <span class="label">Prices</span>
+    <p class="hint">Change any price, then tap Save prices. Changed prices are marked in red until saved.</p>
+    <div class="prices" id="prices"></div>
+    <div class="bulk">
+      <span>Raise or lower every price by</span>
+      <div class="money"><span>$</span><input type="text" id="bulk" inputmode="decimal" placeholder="1.00" autocomplete="off"></div>
+      <button class="ghost" id="bulkUp" type="button">+ Raise</button>
+      <button class="ghost" id="bulkDown" type="button">− Lower</button>
+    </div>
+    <button class="save" id="savePrices" type="button">Save prices</button>
+    <p class="msg" id="price-msg" hidden></p>
+  </section>
+
   <p class="foot"><a href="/" target="_blank" rel="noopener">Open the website ↗</a></p>
 </main>
 
@@ -121,7 +171,31 @@ function showStatus(st) {
   const when = st.updatedAt ? "Last changed " + new Date(st.updatedAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "Never changed";
   $("status-sub").textContent = on ? "Buyers are sent to Etsy. " + when : "Website checkout is working. " + when;
 }
+let catalog = [];
+const toCents = v => { const n = Number(String(v).replace(/[$,\s]/g, "")); return Number.isFinite(n) ? Math.round(n * 100) : NaN; };
+const dollars = c => (c / 100).toFixed(2);
+function markChanged() {
+  document.querySelectorAll(".prow").forEach(row => {
+    const p = catalog.find(x => x.id === row.dataset.id); const c = toCents(row.querySelector("input").value);
+    const changed = c !== p.price;
+    row.classList.toggle("changed", changed);
+    row.querySelector("small").textContent = changed ? `was $${dollars(p.price)}` : (p.price !== p.cents ? `standard $${dollars(p.cents)}` : "");
+  });
+}
+function fillPrices(list) {
+  catalog = list || [];
+  $("prices").innerHTML = catalog.map(p => `<div class="prow" data-id="${p.id}"><div class="nm">${p.name}<small></small></div><div class="money"><span>$</span><input type="text" inputmode="decimal" autocomplete="off" aria-label="Price for ${p.name}" value="${dollars(p.price)}"></div></div>`).join("");
+  markChanged();
+}
+function fillShipping(sh) {
+  $("flat").value = dollars(sh.flatCents);
+  $("freeOn").checked = !!sh.freeEnabled;
+  $("freeOver").value = dollars(sh.freeOverCents);
+  app.classList.toggle("free-off", !sh.freeEnabled);
+}
 function fill(st) {
+  if (st.catalog) fillPrices(st.catalog);
+  if (st.shipping) fillShipping(st.shipping);
   $("vacation").checked = !!st.vacation;
   $("message").value = st.message || "";
   $("returnDate").value = st.returnDate || "";
@@ -168,6 +242,45 @@ fetch("/api/settings", { cache: "no-cache" }).then(r => r.json()).then(st => { f
   $("status-title").textContent = "Couldn't reach the website"; $("status-sub").textContent = "Check your connection and reopen this app.";
 });
 if (pin) unlock();
+
+$("prices").addEventListener("input", markChanged);
+$("freeOn").addEventListener("change", () => app.classList.toggle("free-off", !$("freeOn").checked));
+function bulk(sign) {
+  const d = toCents($("bulk").value || "1");
+  if (!(d > 0)) { note($("price-msg"), "Type an amount like 1.00 first."); return; }
+  document.querySelectorAll(".prow input").forEach(inp => { const c = toCents(inp.value); if (Number.isFinite(c)) inp.value = dollars(Math.max(50, c + sign * d)); });
+  markChanged(); note($("price-msg"), "Prices adjusted. Check them, then tap Save prices.", true);
+}
+$("bulkUp").addEventListener("click", () => bulk(1));
+$("bulkDown").addEventListener("click", () => bulk(-1));
+
+$("savePrices").addEventListener("click", async () => {
+  const prices = {};
+  for (const row of document.querySelectorAll(".prow")) {
+    const c = toCents(row.querySelector("input").value);
+    const name = catalog.find(x => x.id === row.dataset.id).name;
+    if (!Number.isFinite(c) || c < 50 || c > 50000) { note($("price-msg"), `Check the price for ${name}. Use a number like 8.50.`); row.querySelector("input").focus(); return; }
+    prices[row.dataset.id] = c;
+  }
+  const btn = $("savePrices"); btn.disabled = true; btn.textContent = "Saving…";
+  try { const st = await post({ pin, prices }); fill(st); note($("price-msg"), "Prices saved. The website and checkout update within about a minute.", true); }
+  catch (err) { note($("price-msg"), err.message); }
+  finally { btn.disabled = false; btn.textContent = "Save prices"; }
+});
+
+$("saveShip").addEventListener("click", async () => {
+  const flatCents = toCents($("flat").value), freeOverCents = toCents($("freeOver").value);
+  if (!Number.isFinite(flatCents) || flatCents < 0 || flatCents > 5000) { note($("ship-msg"), "Shipping must be between $0 and $50."); return; }
+  if (!Number.isFinite(freeOverCents) || freeOverCents < 100) { note($("ship-msg"), "Type the free-shipping amount, like 25.00."); return; }
+  const btn = $("saveShip"); btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    const st = await post({ pin, shipping: { flatCents, freeEnabled: $("freeOn").checked, freeOverCents } });
+    fill(st);
+    const s = st.shipping;
+    note($("ship-msg"), s.flatCents === 0 ? "Saved. Shipping is free on every order." : `Saved. Shipping is $${dollars(s.flatCents)}` + (s.freeEnabled ? `, free on orders of $${dollars(s.freeOverCents)} or more.` : ", with no free-shipping amount."), true);
+  } catch (err) { note($("ship-msg"), err.message); }
+  finally { btn.disabled = false; btn.textContent = "Save shipping"; }
+});
 </script>
 </body>
 </html>

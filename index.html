@@ -119,6 +119,7 @@ button.buy { border: 0; cursor: pointer; }
 button.buy:disabled { opacity: .45; cursor: not-allowed; }
 .buy.added { background: var(--ink); color: var(--bg); }
 .etsybuy { white-space: nowrap; }
+.prices-pending .price, .prices-pending .tile .cat { visibility: hidden; }
 .vacation .cartbtn { display: none; }
 .vacbar { background: var(--brass); color: #fff; }
 .vacbar .wrap { padding-block: 10px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; font-weight: 600; font-size: 14.5px; }
@@ -712,7 +713,8 @@ const presses = [
 /* Stripe checkout (runs on Netlify). If it isn't running yet, buyers are pointed to Etsy. */
 const CHECKOUT_URL = location.protocol.startsWith("http") && !/claude|claudeusercontent/.test(location.hostname) ? "/.netlify/functions/checkout" : "";
 /* Keep these matching the shop settings in netlify/functions/checkout.js */
-const SHIPPING = 5.00, FREE_SHIP_OVER = 25.00;
+/* Defaults; the CMA Settings app can change them (applied when the page loads) */
+let SHIPPING = 5.00, FREE_SHIP_OVER = 25.00, FREE_ON = true;
 
 /* Placeholder drawings until real photos are added */
 const S = 'fill="var(--surface)" stroke="var(--ink)" stroke-width="2.5"';
@@ -858,7 +860,9 @@ function renderCart() {
   document.getElementById("cart-count").textContent = count;
   document.getElementById("subtotal").textContent = money(sub);
   const sn = document.getElementById("ship-note");
-  if (!count) sn.textContent = `Shipping is ${money(SHIPPING)}, free on orders over ${money(FREE_SHIP_OVER)}.`;
+  if (SHIPPING === 0) sn.innerHTML = `<b class="ok">Free shipping on every order.</b>`;
+  else if (!count) sn.textContent = FREE_ON ? `Shipping is ${money(SHIPPING)}, free on orders over ${money(FREE_SHIP_OVER)}.` : `Shipping is ${money(SHIPPING)} per order.`;
+  else if (!FREE_ON) sn.textContent = `Shipping: ${money(SHIPPING)}.`;
   else if (sub >= FREE_SHIP_OVER) sn.innerHTML = `<b class="ok">Free shipping unlocked.</b>`;
   else sn.innerHTML = `Shipping: ${money(SHIPPING)}. Add <b>${money(FREE_SHIP_OVER - sub)}</b> more for free shipping.`;
   document.getElementById("checkout").disabled = !count;
@@ -1069,6 +1073,20 @@ lbImg.addEventListener("touchend", e => { if (tx === null) return; const dx = e.
 })();
 
 /* Vacation mode: switched on from the shop settings page (/admin) without a redeploy */
+function applySettings(st) {
+  /* prices */
+  const pr = st.prices || {};
+  products.forEach(p => { if (p.basePrice === undefined) p.basePrice = p.price; p.price = Number.isInteger(pr[p.id]) && pr[p.id] >= 50 ? pr[p.id] / 100 : p.basePrice; });
+  /* shipping */
+  const sh = st.shipping || {};
+  if (Number.isInteger(sh.flatCents)) SHIPPING = sh.flatCents / 100;
+  if (Number.isInteger(sh.freeOverCents)) FREE_SHIP_OVER = sh.freeOverCents / 100;
+  if (sh.freeEnabled !== undefined) FREE_ON = !!sh.freeEnabled;
+  renderChips(); renderGrid(); renderCart();
+  if (!lb.hidden && lbId) document.getElementById("lb-price").textContent = money(byId[lbId].price);
+  document.body.classList.remove("prices-pending");
+  applyVacation(st);
+}
 function applyVacation(st) {
   VACATION = !!(st && st.vacation);
   document.body.classList.toggle("vacation", VACATION);
@@ -1084,7 +1102,9 @@ function applyVacation(st) {
   refreshCtls();
 }
 if (location.protocol.startsWith("http") && !/claude|claudeusercontent/.test(location.hostname)) {
-  fetch("/api/settings", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).then(st => { if (st) applyVacation(st); }).catch(() => {});
+  document.body.classList.add("prices-pending");
+  setTimeout(() => document.body.classList.remove("prices-pending"), 2500);
+  fetch("/api/settings", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).then(st => { if (st) applySettings(st); else document.body.classList.remove("prices-pending"); }).catch(() => document.body.classList.remove("prices-pending"));
 }
 </script>
 <style>
