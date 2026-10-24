@@ -1,9 +1,10 @@
-// POST /api/sales  (private: needs ADMIN_PIN)
+// POST /api/sales  (private: needs a passkey session from /api/auth)
 //   { pin, action: "list" }                 -> website orders (read from Stripe) + Etsy/other sales you entered
 //   { pin, action: "add", sale: {...} }     -> save an Etsy or other sale
 //   { pin, action: "delete", id }           -> remove a sale you entered
 // Only order details needed for profit are kept: dates, items, amounts. No customer names or addresses.
-import { CATALOG, stripe, json, checkPin } from "../../lib/shop.js";
+import { CATALOG, stripe, json } from "../../lib/shop.js";
+import { requireSession } from "../../lib/auth.js";
 
 const ID_BY_NAME = Object.fromEntries(CATALOG.map(p => [p.name.toLowerCase(), p.id]));
 const clean = (s, n) => String(s == null ? "" : s).replace(/[<>]/g, "").trim().slice(0, n);
@@ -42,10 +43,10 @@ async function stripeOrders(env) {
 }
 
 export async function onRequestPost({ request, env }) {
+  const locked = await requireSession(env, request);
+  if (locked) return locked;
   let body = {};
   try { body = await request.json(); } catch (e) {}
-  const bad = await checkPin(env, body.pin);
-  if (bad) return bad;
 
   const manual = (await env.SETTINGS.get("manualSales", "json")) || [];
 

@@ -23,6 +23,7 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { margin: 0; }
 body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--f-body);
   padding: calc(16px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(28px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
@@ -62,7 +63,8 @@ input:focus, textarea:focus { outline: 2px solid var(--red); outline-offset: 1px
 .ghost { border: 1px solid var(--line); background: none; color: var(--ink); border-radius: 6px; padding: 11px 14px; font: 500 15px var(--f-body); cursor: pointer; white-space: nowrap; }
 .foot { color: var(--muted); font-size: 13px; text-align: center; }
 .foot a { color: var(--ink); }
-.locked .needs-pin { opacity: .45; pointer-events: none; }
+.dev { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.dev small { display: block; color: var(--muted); font-size: 12.5px; }
 .money { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; }
 .money:focus-within { outline: 2px solid var(--red); outline-offset: 1px; border-color: transparent; }
 .money span { padding-left: 12px; color: var(--muted); font-weight: 600; }
@@ -84,7 +86,8 @@ input:focus, textarea:focus { outline: 2px solid var(--red); outline-offset: 1px
 </style>
 </head>
 <body>
-<main id="app" class="locked">
+<script src="/lock.js"></script>
+<main id="app">
   <header>
     <h1>CMA <span>Settings</span></h1>
     <p class="sub">Shop controls for cmaprecision. Changes show on the website within about a minute.</p>
@@ -95,14 +98,6 @@ input:focus, textarea:focus { outline: 2px solid var(--red); outline-offset: 1px
     <div class="status" id="status"><span class="dot"></span><div><b id="status-title">Checking…</b><p id="status-sub"></p></div></div>
   </section>
 
-  <section class="card" id="pin-card">
-    <span class="label">Your PIN</span>
-    <div class="row">
-      <label class="field">PIN<input type="password" id="pin" inputmode="text" autocomplete="current-password" placeholder="Your ADMIN_PIN"></label>
-      <button class="ghost" id="unlock" type="button">Unlock</button>
-    </div>
-    <p class="msg" id="pin-msg" hidden></p>
-  </section>
 
   <section class="card needs-pin">
     <label class="switch" for="vacation">
@@ -154,15 +149,19 @@ input:focus, textarea:focus { outline: 2px solid var(--red); outline-offset: 1px
     <p class="msg" id="price-msg" hidden></p>
   </section>
 
+  <section class="card needs-pin">
+    <span class="label">Security</span>
+    <p class="hint" style="margin:0">Devices that can open the CMA apps with a fingerprint or phone PIN. Remove any you don't recognize or no longer use.</p>
+    <div id="devices"></div>
+    <button class="ghost" id="lockNow" type="button">Lock now</button>
+  </section>
+
   <p class="foot"><a href="/" target="_blank" rel="noopener">Open the website ↗</a></p>
 </main>
 
 <script>
 const $ = id => document.getElementById(id);
 const app = $("app");
-let pin = "";
-try { pin = localStorage.getItem("cma-admin-pin") || ""; } catch (e) {}
-$("pin").value = pin;
 
 function showStatus(st) {
   const on = !!st.vacation;
@@ -204,34 +203,37 @@ function fill(st) {
 function note(el, text, good) { el.textContent = text; el.classList.toggle("good", !!good); el.hidden = false; }
 
 async function post(body) {
-  const r = await fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const r = await cmaAuth.fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   let data = {}; try { data = await r.json(); } catch (e) {}
   if (!r.ok) throw new Error(data.error || "Something went wrong (error " + r.status + ").");
   return data;
 }
 
-async function unlock() {
-  pin = $("pin").value.trim();
-  if (!pin) { note($("pin-msg"), "Type your PIN first."); return; }
-  $("unlock").disabled = true;
-  try {
-    const st = await post({ pin, check: true });
-    try { localStorage.setItem("cma-admin-pin", pin); } catch (e) {}
-    fill(st); app.classList.remove("locked");
-    note($("pin-msg"), "Unlocked. This phone will remember your PIN.", true);
-    setTimeout(() => { $("pin-msg").hidden = true; }, 2500);
-  } catch (err) {
-    app.classList.add("locked"); note($("pin-msg"), err.message);
-  } finally { $("unlock").disabled = false; }
+async function loadSettings() {
+  try { const r = await fetch("/api/settings", { cache: "no-store" }); fill(await r.json()); } catch (e) {}
+  loadDevices();
 }
-
-$("unlock").addEventListener("click", unlock);
-$("pin").addEventListener("keydown", e => { if (e.key === "Enter") unlock(); });
+async function loadDevices() {
+  try {
+    const r = await cmaAuth.fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "devices" }) });
+    const d = await r.json(); if (!r.ok) throw new Error(d.error);
+    $("devices").innerHTML = d.devices.map(x => `<div class="dev"><span>${String(x.name).replace(/</g, "&lt;")}<small>Added ${new Date(x.added).toLocaleDateString()}</small></span><button class="ghost" type="button" data-rm="${x.id}">Remove</button></div>`).join("") || "<p class='hint'>No devices.</p>";
+  } catch (e) {}
+}
+$("devices").addEventListener("click", async e => {
+  const b = e.target.closest("[data-rm]"); if (!b) return;
+  if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Tap again"; return; }
+  await cmaAuth.fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "remove", id: b.dataset.rm }) });
+  loadDevices();
+});
+$("lockNow").addEventListener("click", () => cmaAuth.lock("Locked."));
+window.addEventListener("cma-unlocked", loadSettings);
+if (cmaAuth.token()) loadSettings();
 
 $("save").addEventListener("click", async () => {
   const btn = $("save"); btn.disabled = true; btn.textContent = "Saving…";
   try {
-    const st = await post({ pin, vacation: $("vacation").checked, message: $("message").value, returnDate: $("returnDate").value });
+    const st = await post({ vacation: $("vacation").checked, message: $("message").value, returnDate: $("returnDate").value });
     fill(st);
     note($("save-msg"), st.vacation ? "Saved. Vacation mode is ON. The website switches within about a minute." : "Saved. The shop is open. The website switches within about a minute.", true);
   } catch (err) { note($("save-msg"), err.message); }
@@ -241,7 +243,6 @@ $("save").addEventListener("click", async () => {
 fetch("/api/settings", { cache: "no-cache" }).then(r => r.json()).then(st => { fill(st); }).catch(() => {
   $("status-title").textContent = "Couldn't reach the website"; $("status-sub").textContent = "Check your connection and reopen this app.";
 });
-if (pin) unlock();
 
 $("prices").addEventListener("input", markChanged);
 $("freeOn").addEventListener("change", () => app.classList.toggle("free-off", !$("freeOn").checked));
@@ -263,7 +264,7 @@ $("savePrices").addEventListener("click", async () => {
     prices[row.dataset.id] = c;
   }
   const btn = $("savePrices"); btn.disabled = true; btn.textContent = "Saving…";
-  try { const st = await post({ pin, prices }); fill(st); note($("price-msg"), "Prices saved. The website and checkout update within about a minute.", true); }
+  try { const st = await post({ prices }); fill(st); note($("price-msg"), "Prices saved. The website and checkout update within about a minute.", true); }
   catch (err) { note($("price-msg"), err.message); }
   finally { btn.disabled = false; btn.textContent = "Save prices"; }
 });
@@ -274,7 +275,7 @@ $("saveShip").addEventListener("click", async () => {
   if (!Number.isFinite(freeOverCents) || freeOverCents < 100) { note($("ship-msg"), "Type the free-shipping amount, like 25.00."); return; }
   const btn = $("saveShip"); btn.disabled = true; btn.textContent = "Saving…";
   try {
-    const st = await post({ pin, shipping: { flatCents, freeEnabled: $("freeOn").checked, freeOverCents } });
+    const st = await post({ shipping: { flatCents, freeEnabled: $("freeOn").checked, freeOverCents } });
     fill(st);
     const s = st.shipping;
     note($("ship-msg"), s.flatCents === 0 ? "Saved. Shipping is free on every order." : `Saved. Shipping is $${dollars(s.flatCents)}` + (s.freeEnabled ? `, free on orders of $${dollars(s.freeOverCents)} or more.` : ", with no free-shipping amount."), true);

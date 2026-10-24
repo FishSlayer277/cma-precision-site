@@ -179,6 +179,7 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
 </style>
 </head>
 <body>
+<script src="/lock.js"></script>
 <main>
   <header>
     <h1>CMA <span>Profit</span></h1>
@@ -233,13 +234,7 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
 
   <!-- SALES -->
   <div class="panel" data-panel="sales" hidden>
-    <section class="card" id="pinbox" hidden>
-      <h2>Unlock your sales</h2>
-      <p class="hint">Your sales are private. Use the same PIN as the CMA Settings app.</p>
-      <div class="rowpin"><input type="password" id="pin" class="plain" placeholder="Your PIN" autocomplete="current-password"><button class="btn" id="unlock" type="button">Unlock</button></div>
-      <p class="msg" id="pinmsg" hidden></p>
-    </section>
-    <div id="salesbody" hidden>
+    <div id="salesbody">
       <section class="card">
         <div class="periods" id="periods" role="group" aria-label="Time period">
           <button type="button" data-p="month">This month</button><button type="button" data-p="last">Last month</button><button type="button" data-p="30">30 days</button><button type="button" data-p="year">This year</button><button type="button" data-p="all">All</button>
@@ -655,12 +650,10 @@ $("applyWeb").addEventListener("click", () => {
 });
 $("applyNo").addEventListener("click", () => { $("applyConfirm").hidden = true; $("applyWeb").hidden = false; });
 $("applyYes").addEventListener("click", async () => {
-  const pin = getPin();
   const btn = $("applyYes"); btn.disabled = true;
   try {
-    if (!pin) throw new Error("Unlock with your PIN on the Sales tab (or in CMA Settings) first.");
     const prices = Object.fromEntries(Object.entries(pricesToApply()).map(([id, v]) => [id, Math.round(v * 100)]));
-    const r = await fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pin, prices }) });
+    const r = await cmaAuth.fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prices }) });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || "Couldn't update prices.");
     if (Array.isArray(d.catalog)) { catalog = d.catalog.map(p => ({ id: p.id, name: p.name, price: p.price / 100 })); renderItems(); renderCosts(); calc(); }
@@ -700,32 +693,22 @@ function renderRank() {
 }
 
 /* ---------- SALES ---------- */
-const getPin = () => { try { return localStorage.getItem("cma-admin-pin") || ""; } catch (e) { return ""; } };
-const setPin = v => { try { localStorage.setItem("cma-admin-pin", v); } catch (e) {} };
 function msg(el, text, good) { el.textContent = text; el.classList.toggle("good", !!good); el.hidden = false; }
 let sales = null, period = store.get("period", "month");
 async function api(body) {
-  const r = await fetch("/api/sales", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pin: getPin(), ...body }) });
+  const r = await cmaAuth.fetch("/api/sales", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) { const e = new Error(d.error || "Something went wrong (error " + r.status + ")."); e.status = r.status; throw e; }
   return d;
 }
 async function openSales(force) {
-  if (!getPin()) { $("pinbox").hidden = false; $("salesbody").hidden = true; return; }
+  if (!cmaAuth.token()) return;
   if (sales && !force) { renderSales(); return; }
-  $("salesbody").hidden = false; $("pinbox").hidden = true;
   $("kpis").innerHTML = `<p class="empty">Loading your sales…</p>`;
   try { sales = await api({ action: "list" }); renderSales(); }
-  catch (err) {
-    if (err.status === 401 || err.status === 429) { $("pinbox").hidden = false; $("salesbody").hidden = true; msg($("pinmsg"), err.message); }
-    else $("kpis").innerHTML = `<p class="empty">${esc(err.message)}</p>`;
-  }
+  catch (err) { $("kpis").innerHTML = `<p class="empty">${esc(err.message)}</p>`; }
 }
-$("unlock").addEventListener("click", async () => {
-  const v = $("pin").value.trim(); if (!v) return msg($("pinmsg"), "Type your PIN first.");
-  setPin(v); sales = null; $("pinmsg").hidden = true; await openSales(true);
-});
-$("pin").addEventListener("keydown", e => { if (e.key === "Enter") $("unlock").click(); });
+window.addEventListener("cma-unlocked", () => { if (store.get("tab", "calc") === "sales") openSales(); });
 
 function orderMoney(o) {
   const items = o.items.reduce((t, i) => t + i.unit * i.qty, 0) / 100;
@@ -1015,7 +998,7 @@ function renderWhatIf() {
   $("whatif").innerHTML = `<div class="answer">${line("Website", oldP, newP)}${line("Etsy", oldE, newE)}<p class="hint" style="margin:0">Based on ${mixNote}, a typical ${P.ipo}-item order, and your costs.</p></div>`;
 }
 $("wi-amt").addEventListener("input", renderWhatIf);
-$("wi-mix").addEventListener("change", () => { store.set("wimix", $("wi-mix").value); if ($("wi-mix").value === "sales" && !sales && getPin()) openSalesQuiet(); renderWhatIf(); });
+$("wi-mix").addEventListener("change", () => { store.set("wimix", $("wi-mix").value); if ($("wi-mix").value === "sales" && !sales && cmaAuth.token()) openSalesQuiet(); renderWhatIf(); });
 async function openSalesQuiet() { try { sales = await api({ action: "list" }); renderWhatIf(); } catch (e) {} }
 window.renderWhatIf = renderWhatIf;
 
