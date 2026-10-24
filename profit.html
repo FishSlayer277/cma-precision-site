@@ -83,6 +83,15 @@ details.costs > summary::-webkit-details-marker { display: none; }
 details.costs > summary::after { content: "Edit ▾"; color: var(--red); font-size: 13.5px; font-weight: 600; }
 details.costs[open] > summary::after { content: "Done ▴"; }
 details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
+.pcosts { display: grid; }
+.pc { display: grid; grid-template-columns: minmax(0, 1fr) 108px; gap: 10px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.pc:last-child { border-bottom: 0; }
+.pc .nm { font-size: 14px; line-height: 1.25; }
+.pc .nm small { display: block; color: var(--muted); font-size: 12px; }
+.setall { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13.5px; color: var(--muted); }
+.setall span { flex-basis: 100%; }
+.setall .money { width: 108px; }
+.saved { font-size: 12.5px; color: var(--good); min-height: 1em; }
 .answer { font-size: 15px; background: var(--raise); border-radius: 8px; padding: 12px; }
 .answer b { font-size: 20px; color: var(--ink); }
 :focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
@@ -134,9 +143,13 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
       <summary><h2>Your costs</h2></summary>
       <div class="inner">
         <p class="hint">Saved on this phone. Change them whenever filament or label prices move.</p>
-        <div class="row2">
-          <label class="f">Filament per item<div class="money"><input id="c-fil" inputmode="decimal"></div></label>
-          <label class="f">Other cost per item<small>Magnets, feet, strips, power</small><div class="money"><input id="c-other" inputmode="decimal"></div></label>
+        <h2>Cost to make each product</h2>
+        <p class="hint">Your exact cost for one of each: filament plus magnets, feet, strips, power. Not shipping or packaging; those are below.</p>
+        <div class="pcosts" id="pcosts"></div>
+        <div class="setall">
+          <span>Set every product to</span>
+          <div class="money"><input id="setAllVal" inputmode="decimal" placeholder="1.50"></div>
+          <button class="ghost" id="setAll" type="button">Apply to all</button>
         </div>
         <div class="row2">
           <label class="f">Packaging per order<div class="money"><input id="c-pack" inputmode="decimal"></div></label>
@@ -169,8 +182,9 @@ const money = n => (n < 0 ? "−$" : "$") + Math.abs(n).toFixed(2);
 const num = v => { const n = parseFloat(String(v).replace(/[$,%\s]/g, "")); return Number.isFinite(n) ? n : 0; };
 
 /* Defaults: your numbers (filament $1.50, label $7.50) and standard fee rates */
-const COST_DEFAULTS = { fil: 1.50, other: 0, pack: 0.75, label: 7.50, sPct: 2.9, sFix: 0.30, eTx: 6.5, eList: 0.20, ePp: 3, ePf: 0.25, eAds: 15, target: 40 };
-const FIELDS = { fil: "c-fil", other: "c-other", pack: "c-pack", label: "c-label", sPct: "s-pct", sFix: "s-fix", eTx: "e-tx", eList: "e-list", ePp: "e-pp", ePf: "e-pf", eAds: "e-ads", target: "target" };
+const DEFAULT_ITEM_COST = 1.50;
+const COST_DEFAULTS = { pack: 0.75, label: 7.50, sPct: 2.9, sFix: 0.30, eTx: 6.5, eList: 0.20, ePp: 3, ePf: 0.25, eAds: 15, target: 40 };
+const FIELDS = { pack: "c-pack", label: "c-label", sPct: "s-pct", sFix: "s-fix", eTx: "e-tx", eList: "e-list", ePp: "e-pp", ePf: "e-pf", eAds: "e-ads", target: "target" };
 let catalog = [
   { id: "4328837116", name: "Classic Die Block", price: 7.50 }, { id: "4509881976", name: "Die Block for Lee Breech-Lock", price: 7.50 },
   { id: "4509874233", name: "Die Block for Hornady LNL", price: 7.50 }, { id: "4297972451", name: "Turret Caddy", price: 7.50 },
@@ -188,14 +202,25 @@ const store = { get(k, d) { try { const v = localStorage.getItem("cma-profit-" +
                 set(k, v) { try { localStorage.setItem("cma-profit-" + k, JSON.stringify(v)); } catch (e) {} } };
 const costs = { ...COST_DEFAULTS, ...store.get("costs", {}) };
 qty = store.get("qty", {});
+let itemCost = store.get("itemCost", {});   // product id -> your cost to make one
+const old = store.get("costs", {});          // carry over the earlier single filament number
+if (!Object.keys(itemCost).length && (old.fil !== undefined || old.other !== undefined)) {
+  const c = (num(old.fil) || 0) + (num(old.other) || 0);
+  if (c > 0) catalog.forEach(p => { itemCost[p.id] = c; });
+}
+const costOf = id => (itemCost[id] !== undefined ? itemCost[id] : DEFAULT_ITEM_COST);
 for (const [k, id] of Object.entries(FIELDS)) $(id).value = costs[k];
 
 function renderItems() {
   $("items").innerHTML = catalog.map(p => {
     const q = qty[p.id] || 0;
-    return `<div class="it${q ? " has" : ""}" data-id="${p.id}"><div class="nm">${p.name}<small>${money(p.price)} each</small></div>
+    const c = costOf(p.id), pm = p.price > 0 ? Math.round((p.price - c) / p.price * 100) : 0;
+    return `<div class="it${q ? " has" : ""}" data-id="${p.id}"><div class="nm">${p.name}<small>${money(p.price)} each · costs ${money(c)} · ${pm}% before fees & shipping</small></div>
       <div class="step"><button type="button" data-d="-1" aria-label="One fewer ${p.name}">−</button><span>${q}</span><button type="button" data-d="1" aria-label="One more ${p.name}">+</button></div></div>`;
   }).join("");
+}
+function renderCosts() {
+  $("pcosts").innerHTML = catalog.map(p => `<div class="pc" data-id="${p.id}"><div class="nm">${p.name}<small>sells for ${money(p.price)}</small></div><div class="money"><input inputmode="decimal" aria-label="Your cost for ${p.name}" value="${costOf(p.id).toFixed(2)}"></div></div>`).join("") + `<div class="saved" id="costSaved"></div>`;
 }
 function autoShip(itemsTotal) {
   if (shipCfg.flatCents === 0) return 0;
@@ -212,7 +237,7 @@ function calc() {
   if ($("e-ship").dataset.touched !== "1") $("e-ship").value = (items > 0 ? shipCfg.flatCents / 100 : 0).toFixed(2);
   $("ship-auto").textContent = shipManual ? "Typed by you" : (items > 0 && autoShip(items) === 0 ? "Free shipping applies" : "Automatic from your settings");
 
-  const making = (costs.fil + costs.other) * n;
+  const making = catalog.reduce((t, p) => t + costOf(p.id) * (qty[p.id] || 0), 0);
   const pack = n ? costs.pack : 0, label = n ? costs.label : 0;
 
   // website
@@ -246,15 +271,16 @@ function calc() {
     r("Revenue (buyer pays)", money(wGross), money(eGross), "tot") +
     r("Card / Etsy fees", "−" + money(wFees), "−" + money(eTx + eList + ePp)) +
     ($("offsite").checked ? r("Offsite Ads", "–", "−" + money(eAds)) : "") +
-    r("Filament + other", "−" + money(making), "−" + money(making)) +
+    r("Cost to make", "−" + money(making), "−" + money(making)) +
     r("Packaging", "−" + money(pack), "−" + money(pack)) +
     r("Shipping label", "−" + money(label), "−" + money(label)) +
     r("Profit", money(wProfit), money(eProfit), "tot");
 
   // free-shipping finder (website, free shipping, at the average item price)
   const avg = catalog.reduce((t, p) => t + p.price, 0) / catalog.length;
+  const avgCost = catalog.reduce((t, p) => t + costOf(p.id), 0) / catalog.length;
   const tgt = costs.target / 100;
-  const den = (1 - costs.sPct / 100) - (costs.fil + costs.other) / avg - tgt;
+  const den = (1 - costs.sPct / 100) - avgCost / avg - tgt;
   const fixed = costs.sFix + costs.pack + costs.label;
   if (den <= 0) $("finder").innerHTML = `A ${costs.target}% margin isn't reachable with free shipping at these prices. Try a lower target or raise prices.`;
   else {
@@ -275,16 +301,31 @@ $("w-ship").addEventListener("input", () => { shipManual = true; calc(); });
 $("e-ship").addEventListener("input", () => { $("e-ship").dataset.touched = "1"; calc(); });
 document.querySelectorAll("input").forEach(i => { if (!["w-ship", "e-ship"].includes(i.id)) i.addEventListener("input", calc); });
 $("offsite").addEventListener("change", calc);
+let savedTimer;
+$("pcosts").addEventListener("input", e => {
+  const row = e.target.closest(".pc"); if (!row) return;
+  const v = num(e.target.value);
+  if (e.target.value.trim() === "") delete itemCost[row.dataset.id]; else itemCost[row.dataset.id] = Math.max(0, v);
+  store.set("itemCost", itemCost);
+  renderItems(); calc();
+  const el = $("costSaved"); el.textContent = "Saved on this phone ✓"; clearTimeout(savedTimer); savedTimer = setTimeout(() => { el.textContent = ""; }, 1500);
+});
+$("setAll").addEventListener("click", () => {
+  const v = num($("setAllVal").value); if (!(v >= 0) || $("setAllVal").value.trim() === "") return;
+  catalog.forEach(p => { itemCost[p.id] = v; }); store.set("itemCost", itemCost);
+  renderCosts(); renderItems(); calc();
+});
 $("clear").addEventListener("click", () => { qty = {}; $("disc").value = ""; $("offsite").checked = false; shipManual = false; $("e-ship").dataset.touched = ""; renderItems(); calc(); });
 $("autoShip").addEventListener("click", () => { shipManual = false; $("e-ship").dataset.touched = ""; calc(); });
 $("resetCosts").addEventListener("click", () => { for (const k of ["sPct", "sFix", "eTx", "eList", "ePp", "ePf", "eAds"]) $(FIELDS[k]).value = COST_DEFAULTS[k]; calc(); });
 
-renderItems(); calc();
+renderCosts(); renderItems(); calc();
 fetch("/api/settings", { cache: "no-cache" }).then(r => r.ok ? r.json() : Promise.reject())
   .then(st => {
     if (Array.isArray(st.catalog) && st.catalog.length) catalog = st.catalog.map(p => ({ id: p.id, name: p.name, price: p.price / 100 }));
     if (st.shipping) shipCfg = st.shipping;
     $("src").textContent = "Using your current website prices and shipping.";
+    if (!document.activeElement || !document.activeElement.closest(".pc")) renderCosts();
     renderItems(); calc();
   })
   .catch(() => { $("src").textContent = "Offline: using standard prices. Connect to load your current website prices."; });
