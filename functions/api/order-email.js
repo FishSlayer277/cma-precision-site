@@ -1,13 +1,8 @@
-// Emails you the full details of every paid order.
-// Stripe calls this after each successful checkout (webhook event: checkout.session.completed).
-// Netlify environment variables needed:
-//   STRIPE_SECRET_KEY      your Stripe secret key (sk_live_...)
-//   STRIPE_WEBHOOK_SECRET  the signing secret for this webhook (whsec_...)
-//   RESEND_API_KEY         API key from resend.com (re_...)
-//   ORDER_EMAIL            optional; defaults to cmaprecision27@gmail.com
-const Stripe = require("stripe");
+// POST /api/order-email -> Stripe calls this after each paid checkout (event: checkout.session.completed)
+// and it emails John the full order details through Resend.
+// Cloudflare variables needed: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, RESEND_API_KEY (ORDER_EMAIL optional)
+import { stripe, verifyStripeSignature } from "../../lib/shop.js";
 
-const TO = process.env.ORDER_EMAIL || "cmaprecision27@gmail.com";
 const money = c => "$" + ((c || 0) / 100).toFixed(2);
 const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -82,44 +77,37 @@ function buildEmail(session, lineItems) {
   };
 }
 
-async function sendEmail(msg) {
+
+async function sendEmail(env, msg) {
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
-    headers: { "Authorization": `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+    headers: { "Authorization": `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       from: "CMA Precision Orders <onboarding@resend.dev>",
-      to: [TO],
-      subject: msg.subject,
-      html: msg.html,
-      text: msg.text,
+      to: [env.ORDER_EMAIL || "cmaprecision27@gmail.com"],
+      subject: msg.subject, html: msg.html, text: msg.text,
       ...(msg.replyTo ? { reply_to: msg.replyTo } : {})
     })
   });
   if (!res.ok) throw new Error("Email failed: " + res.status + " " + (await res.text()));
 }
 
-exports.handler = async (event) => {
-  const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
-  const raw = event.isBase64Encoded ? Buffer.from(event.body, "base64").toString("utf8") : event.body;
-  const sig = event.headers["stripe-signature"] || event.headers["Stripe-Signature"];
-  let evt;
-  try {
-    evt = stripe.webhooks.constructEvent(raw, sig, process.env.STRIPE_WEBHOOK_SECRET);
-  } catch (err) {
-    return { statusCode: 400, body: "Bad signature" };
-  }
-  if (evt.type !== "checkout.session.completed") return { statusCode: 200, body: "ignored" };
-
+export async function onRequestPost({ request, env }) {
+  const raw = await request.text();
+  const ok = await verifyStripeSignature(raw, request.headers.get("stripe-signature"), (env.STRIPE_WEBHOOK_SECRET || "").trim());
+  if (!ok) return new Response("Bad signature", { status: 400 });
+  let evt; try { evt = JSON.parse(raw); } catch (e) { return new Response("Bad body", { status: 400 }); }
+  if (evt.type !== "checkout.session.completed") return new Response("ignored");
   const session = evt.data.object;
-  if (session.payment_status !== "paid") return { statusCode: 200, body: "not paid yet" };
+  if (session.payment_status !== "paid") return new Response("not paid yet");
   try {
-    const items = await stripe.checkout.sessions.listLineItems(session.id, { limit: 100 });
-    await sendEmail(buildEmail(session, items.data));
-    return { statusCode: 200, body: "sent" };
+    const items = await stripe(env, "GET", "checkout/sessions/" + session.id + "/line_items?limit=100");
+    await sendEmail(env, buildEmail(session, items.data));
+    return new Response("sent");
   } catch (err) {
     console.error(err);
-    return { statusCode: 500, body: "Could not send order email" }; // Stripe will retry
+    return new Response("Could not send order email", { status: 500 }); // Stripe retries
   }
-};
+}
 
-exports.buildEmail = buildEmail;
+export { buildEmail };

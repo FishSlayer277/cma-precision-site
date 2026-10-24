@@ -1,25 +1,13 @@
-// Returns the details for the order confirmation page.
-// The page sends the Stripe checkout session id from the return link; only paid orders are shown,
-// and only what the buyer already knows (their items, totals, name and ship-to address).
-const Stripe = require("stripe");
+// GET /api/order-status?session_id=cs_... -> details for the order confirmation page (paid orders only)
+import { stripe, json } from "../../lib/shop.js";
 
-const json = (statusCode, body) => ({
-  statusCode,
-  headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
-  body: JSON.stringify(body)
-});
-
-exports.handler = async (event) => {
-  const id = (event.queryStringParameters && event.queryStringParameters.session_id) || "";
+export async function onRequestGet({ request, env }) {
+  const id = new URL(request.url).searchParams.get("session_id") || "";
   if (!/^cs_(live|test)_[A-Za-z0-9]+$/.test(id)) return json(400, { error: "Missing order reference." });
-  const key = (process.env.STRIPE_SECRET_KEY || "").trim();
-  if (!key) return json(500, { error: "Payments aren't set up." });
-  const stripe = Stripe(key);
-
   try {
-    const s = await stripe.checkout.sessions.retrieve(id);
+    const s = await stripe(env, "GET", "checkout/sessions/" + id);
     if (s.payment_status !== "paid") return json(409, { error: "This order isn't paid yet." });
-    const items = await stripe.checkout.sessions.listLineItems(id, { limit: 100 });
+    const items = await stripe(env, "GET", "checkout/sessions/" + id + "/line_items?limit=100");
     const ship = (s.collected_information && s.collected_information.shipping_details) || s.shipping_details || {};
     const a = ship.address || {};
     const t = s.total_details || {};
@@ -35,9 +23,8 @@ exports.handler = async (event) => {
       discount: t.amount_discount || 0,
       tax: t.amount_tax || 0,
       total: s.amount_total
-    });
+    }, { "Cache-Control": "no-store" });
   } catch (err) {
-    console.error(err);
     return json(404, { error: "Order not found." });
   }
-};
+}

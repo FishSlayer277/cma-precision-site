@@ -711,8 +711,8 @@ const presses = [
   ["pro1000", "Lee Pro 1000"]
 ];
 /* Stripe checkout (runs on Netlify). If it isn't running yet, buyers are pointed to Etsy. */
-const CHECKOUT_URL = location.protocol.startsWith("http") && !/claude|claudeusercontent/.test(location.hostname) ? "/.netlify/functions/checkout" : "";
-/* Keep these matching the shop settings in netlify/functions/checkout.js */
+const CHECKOUT_URL = location.protocol.startsWith("http") && !/claude|claudeusercontent/.test(location.hostname) ? "/api/checkout" : "";
+/* Defaults; the live values come from the CMA Settings app */
 /* Defaults; the CMA Settings app can change them (applied when the page loads) */
 let SHIPPING = 5.00, FREE_SHIP_OVER = 25.00, FREE_ON = true;
 
@@ -1049,7 +1049,7 @@ lbImg.addEventListener("touchend", e => { if (tx === null) return; const dx = e.
   const loading = document.getElementById("ov-loading");
   if (!/^cs_(live|test)_/.test(sid)) { loading.hidden = true; return; }
   const cents = c => money((c || 0) / 100);
-  fetch("/.netlify/functions/order-status?session_id=" + encodeURIComponent(sid))
+  fetch("/api/order-status?session_id=" + encodeURIComponent(sid))
     .then(r => r.ok ? r.json() : Promise.reject(r.status))
     .then(o => {
       const first = (o.name || "").trim().split(/\s+/)[0];
