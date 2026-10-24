@@ -23,6 +23,7 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { margin: 0; }
 body { background: var(--bg); color: var(--ink); font: 15.5px/1.45 var(--f-body);
   padding: calc(14px + env(safe-area-inset-top, 0px)) max(14px, env(safe-area-inset-right, 0px)) calc(28px + env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px)); }
@@ -95,6 +96,65 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
 .answer { font-size: 15px; background: var(--raise); border-radius: 8px; padding: 12px; }
 .answer b { font-size: 20px; color: var(--ink); }
 :focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 8; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; background: var(--bg); padding-block: 6px; margin-inline: -2px; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button { flex: none; border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 8px 13px; font: 600 13.5px var(--f-body); cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--red-deep); border-color: var(--red-deep); color: #fff; }
+.panel { display: grid; gap: 14px; }
+.results { top: calc(env(safe-area-inset-top, 0px) + 50px); }
+.btn { border: 0; border-radius: 6px; background: var(--red-deep); color: #fff; font: 600 15px var(--f-body); padding: 11px 16px; cursor: pointer; }
+.btn.small { padding: 8px 12px; font-size: 13.5px; }
+.btn.wide { width: 100%; padding: 13px; }
+.btn:disabled { opacity: .5; cursor: wait; }
+.plain { width: 100%; min-width: 0; font: 16px var(--f-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px 10px; }
+.plain:focus { outline: 2px solid var(--red); outline-offset: 1px; border-color: transparent; }
+.rowpin { display: flex; gap: 8px; } .rowpin .plain { flex: 1; }
+.msg { margin: 0; padding: 10px 12px; border-radius: 6px; font-size: 14px; background: var(--red-soft); }
+.msg.good { background: rgba(73, 184, 119, .16); }
+.periods { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.periods button { flex: none; border: 1px solid var(--line); background: none; color: var(--muted); border-radius: 6px; padding: 7px 10px; font: 500 13px var(--f-body); cursor: pointer; }
+.periods button[aria-pressed="true"] { color: var(--ink); border-color: var(--red); background: var(--red-soft); }
+.kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.kpi { background: var(--raise); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.kpi > span { display: block; font: 600 11px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.kpi b { font-size: 22px; font-variant-numeric: tabular-nums; }
+.split { font-size: 13.5px; color: var(--muted); display: grid; gap: 4px; }
+.split b { color: var(--ink); }
+.headrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.olist { display: grid; }
+.ord { padding: 10px 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; }
+.ord:last-child { border-bottom: 0; }
+.ord .top { font-size: 14px; font-weight: 600; }
+.ord .sub { grid-column: 1; font-size: 12.5px; color: var(--muted); }
+.ord .amt { grid-row: 1 / span 2; grid-column: 2; text-align: right; font-variant-numeric: tabular-nums; font-size: 14px; }
+.ord .amt small { display: block; font-size: 12px; }
+.ord.refunded { opacity: .5; } .ord.refunded .top { text-decoration: line-through; }
+.badge { display: inline-block; font: 600 10.5px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; margin-right: 6px; vertical-align: 1px; }
+.b-web { background: var(--red-soft); color: var(--red); } .b-etsy { background: rgba(224, 164, 58, .16); color: var(--warn); } .b-other { background: var(--raise); color: var(--muted); }
+.del { background: none; border: 0; color: var(--muted); text-decoration: underline; font-size: 12.5px; cursor: pointer; padding: 0; justify-self: start; }
+.addsale { display: grid; gap: 12px; border: 1px dashed var(--line); border-radius: 8px; padding: 12px; }
+.best { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 12px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.best .h { font: 600 11px var(--f-mono); letter-spacing: .06em; color: var(--muted); }
+.best .r { text-align: right; }
+.ptable { display: grid; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.prow { display: grid; grid-template-columns: minmax(0, 1fr) 62px 70px 70px; gap: 6px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.prow.h { font: 600 10.5px var(--f-mono); letter-spacing: .05em; color: var(--muted); text-transform: uppercase; }
+.prow > span:not(:first-child) { text-align: right; }
+.prow .nm small { display: block; color: var(--muted); font-size: 11.5px; }
+.up { color: var(--warn); } .down { color: var(--good); }
+.confirm { background: var(--raise); border-radius: 8px; padding: 12px; display: grid; gap: 10px; }
+.confirm p { margin: 0; }
+.rk { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.rk .n { color: var(--muted); font-variant-numeric: tabular-nums; }
+.rk .v { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.rk .v small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+.rk .bar { grid-column: 2 / span 2; height: 5px; border-radius: 3px; background: var(--raise); overflow: hidden; }
+.rk .bar i { display: block; height: 100%; background: var(--red); }
+.pt { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: 10px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.min { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; }
+.min input { width: 100%; min-width: 0; border: 0; background: none; color: var(--ink); font: 16px var(--f-body); padding: 9px 8px; }
+.min input:focus { outline: none; } .min::after { content: "min"; padding-right: 8px; color: var(--muted); font-size: 13px; }
+.empty { color: var(--muted); font-size: 14px; padding: 6px 0; }
 </style>
 </head>
 <body>
@@ -104,6 +164,15 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
     <p class="sub" id="src">Loading your current website prices…</p>
   </header>
 
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Sections">
+    <button type="button" role="tab" data-tab="calc">Calculator</button>
+    <button type="button" role="tab" data-tab="sales">Sales</button>
+    <button type="button" role="tab" data-tab="pricing">Pricing</button>
+    <button type="button" role="tab" data-tab="hours">Print time</button>
+    <button type="button" role="tab" data-tab="costs">Costs</button>
+  </nav>
+
+  <div class="panel" data-panel="calc">
   <!-- RESULTS -->
   <section class="card results" aria-live="polite">
     <div class="cols">
@@ -126,20 +195,109 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
     </div>
     <label class="f">Discount or promo code (website)<small>Dollars off this order, if any</small><div class="money"><input id="disc" inputmode="decimal" placeholder="0.00"></div></label>
     <label class="chk"><input type="checkbox" id="offsite"> This Etsy sale came from an Offsite Ad</label>
+    <p class="hint">Your costs (filament, packaging, label, fees) are on the <b>Costs</b> tab.</p>
     <div class="actions"><button class="ghost" id="clear" type="button">Clear order</button><button class="ghost" id="autoShip" type="button">Reset shipping to automatic</button></div>
   </section>
 
   <!-- FREE SHIPPING FINDER -->
   <section class="card">
     <h2>Free-shipping finder</h2>
-    <p class="hint">The smallest website order you can ship free and still hit your target margin. Uses your costs below and your average item price.</p>
+    <p class="hint">The smallest website order you can ship free and still hit your target margin. Uses your costs and your average item price.</p>
     <label class="f">Target profit margin<div class="pct"><input id="target" inputmode="decimal"></div></label>
     <div class="answer" id="finder"></div>
   </section>
 
+  </div><!-- /calc -->
+
+  <!-- SALES -->
+  <div class="panel" data-panel="sales" hidden>
+    <section class="card" id="pinbox" hidden>
+      <h2>Unlock your sales</h2>
+      <p class="hint">Your sales are private. Use the same PIN as the CMA Settings app.</p>
+      <div class="rowpin"><input type="password" id="pin" class="plain" placeholder="Your PIN" autocomplete="current-password"><button class="btn" id="unlock" type="button">Unlock</button></div>
+      <p class="msg" id="pinmsg" hidden></p>
+    </section>
+    <div id="salesbody" hidden>
+      <section class="card">
+        <div class="periods" id="periods" role="group" aria-label="Time period">
+          <button type="button" data-p="month">This month</button><button type="button" data-p="last">Last month</button><button type="button" data-p="30">30 days</button><button type="button" data-p="year">This year</button><button type="button" data-p="all">All</button>
+        </div>
+        <div class="kpis" id="kpis"></div>
+        <div class="split" id="split"></div>
+        <p class="hint" id="salesnote"></p>
+      </section>
+      <section class="card">
+        <h2>Best sellers</h2>
+        <div id="best"></div>
+      </section>
+      <section class="card">
+        <div class="headrow"><h2>Orders</h2><button class="btn small" id="addSaleBtn" type="button">+ Add Etsy sale</button></div>
+        <form class="addsale" id="addsale" hidden>
+          <div class="row2">
+            <label class="f">Date<input type="date" id="as-date" class="plain"></label>
+            <label class="f">Where<select id="as-ch" class="plain"><option value="etsy">Etsy</option><option value="other">Other (in person, etc.)</option></select></label>
+          </div>
+          <div class="items" id="as-items"></div>
+          <div class="row2">
+            <label class="f">Shipping the buyer paid<div class="money"><input id="as-ship" inputmode="decimal" placeholder="0.00"></div></label>
+            <label class="f">Discount<div class="money"><input id="as-disc" inputmode="decimal" placeholder="0.00"></div></label>
+          </div>
+          <label class="chk"><input type="checkbox" id="as-ads"> Came from an Etsy Offsite Ad</label>
+          <label class="f">Note (optional)<input type="text" id="as-note" class="plain" maxlength="120" placeholder="Order number or buyer first name"></label>
+          <div class="answer" id="as-preview"></div>
+          <div class="actions"><button class="btn" type="submit" id="as-save">Save sale</button><button class="ghost" type="button" id="as-cancel">Cancel</button></div>
+          <p class="msg" id="as-msg" hidden></p>
+        </form>
+        <div id="orders"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- PRICING -->
+  <div class="panel" data-panel="pricing" hidden>
+    <section class="card">
+      <h2>Price suggester</h2>
+      <p class="hint">Pick the profit margin you want. Each product gets a suggested price for the website and for Etsy (Etsy's fees are higher). Uses your costs and a typical order.</p>
+      <div class="row2">
+        <label class="f">Target margin, website<div class="pct"><input id="pr-tw" inputmode="decimal"></div></label>
+        <label class="f">Target margin, Etsy<div class="pct"><input id="pr-te" inputmode="decimal"></div></label>
+      </div>
+      <div class="row2">
+        <label class="f">Items in a typical order<small>Spreads packaging and the label across items</small><input id="pr-ipo" class="plain" inputmode="decimal"></label>
+        <label class="f">Round prices up to<select id="pr-round" class="plain"><option value="0.25">nearest $0.25</option><option value="0.5">nearest $0.50</option><option value="1">whole dollar</option><option value="0.01">exact cents</option></select></label>
+      </div>
+      <div class="ptable" id="ptable"></div>
+      <label class="chk"><input type="checkbox" id="pr-raise" checked> Only raise prices (keep any price that's already above the suggestion)</label>
+      <button class="btn wide" id="applyWeb" type="button">Use these prices on the website</button>
+      <div class="confirm" id="applyConfirm" hidden>
+        <p id="applyText"></p>
+        <div class="actions"><button class="btn" id="applyYes" type="button">Yes, update the website</button><button class="ghost" id="applyNo" type="button">Cancel</button></div>
+      </div>
+      <p class="msg" id="applyMsg" hidden></p>
+      <p class="hint">Etsy prices have to be changed in Etsy yourself.</p>
+    </section>
+  </div>
+
+  <!-- PRINT TIME -->
+  <div class="panel" data-panel="hours" hidden>
+    <section class="card">
+      <h2>Best use of printer time</h2>
+      <p class="hint">Profit earned per hour of printer time, from best to worst. Website sales, typical order. Type print times below.</p>
+      <div id="rank"></div>
+      <div class="answer" id="hrDay"></div>
+      <label class="f">Printer hours you run per day (all printers)<input id="hr-day" class="plain" inputmode="decimal"></label>
+    </section>
+    <section class="card">
+      <h2>Print time per piece</h2>
+      <p class="hint">Minutes of printer time for ONE piece. If a plate prints 4 at once in 2 hours, that's 30 minutes each.</p>
+      <div id="ptimes"></div>
+    </section>
+  </div>
+
   <!-- COSTS -->
+  <div class="panel" data-panel="costs" hidden>
   <section class="card">
-    <details class="costs" id="costs">
+    <details class="costs" id="costs" open>
       <summary><h2>Your costs</h2></summary>
       <div class="inner">
         <p class="hint">Saved on this phone. Change them whenever filament or label prices move.</p>
@@ -174,6 +332,7 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
       </div>
     </details>
   </section>
+  </div><!-- /costs -->
 </main>
 
 <script>
@@ -288,6 +447,7 @@ function calc() {
     const current = shipCfg.freeEnabled ? ` Your free shipping is set at <b>${money(shipCfg.freeOverCents / 100)}</b> right now.` : "";
     $("finder").innerHTML = `Offer free shipping on orders of <b>${money(Math.ceil(min))}</b> or more (about ${items_} items at your ${money(avg)} average price).${current}`;
   }
+  if (window.onCostsChanged) window.onCostsChanged();
 }
 
 $("items").addEventListener("click", e => {
@@ -329,6 +489,300 @@ fetch("/api/settings", { cache: "no-cache" }).then(r => r.ok ? r.json() : Promis
     renderItems(); calc();
   })
   .catch(() => { $("src").textContent = "Offline: using standard prices. Connect to load your current website prices."; });
+</script>
+
+<script>
+/* ===================== Batch 1: tabs, sales log, price suggester, print time ===================== */
+const esc = t => String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const pct = n => (Number.isFinite(n) ? n.toFixed(1) : "–") + "%";
+
+/* ---------- tabs ---------- */
+const TABS = ["calc", "sales", "pricing", "hours", "costs"];
+function showTab(t) {
+  if (!TABS.includes(t)) t = "calc";
+  document.querySelectorAll("[data-panel]").forEach(el => { el.hidden = el.dataset.panel !== t; });
+  document.querySelectorAll("#tabs [data-tab]").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === t));
+  store.set("tab", t);
+  if (t === "sales") openSales();
+  if (t === "pricing") renderPricing();
+  if (t === "hours") renderHours();
+  window.scrollTo(0, 0);
+}
+$("tabs").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if (b) showTab(b.dataset.tab); });
+
+/* ---------- shared per-item economics ---------- */
+const P = { tw: 50, te: 50, ipo: 2, round: "0.25", ...store.get("pricing", {}) };
+let minutes = store.get("minutes", {});
+let hrDay = store.get("hrday", 12);
+const shipFlat = () => (shipCfg.flatCents || 0) / 100;
+function orderShare(channel, ipo) {
+  const n = Math.max(1, ipo || P.ipo || 1);
+  const avgPrice = catalog.reduce((t, p) => t + p.price, 0) / catalog.length;
+  if (channel === "website") {
+    const freeShip = shipCfg.flatCents === 0 || (shipCfg.freeEnabled && avgPrice * n >= shipCfg.freeOverCents / 100);
+    const shipIn = freeShip ? 0 : shipFlat();
+    return (costs.label + costs.pack + costs.sFix + shipIn * costs.sPct / 100 - shipIn) / n;
+  }
+  const shipIn = shipFlat();
+  return (costs.label + costs.pack + costs.ePf + shipIn * (costs.eTx + costs.ePp) / 100 - shipIn) / n;
+}
+function unitProfit(p, channel, price) {
+  price = price == null ? p.price : price;
+  const fees = channel === "website" ? price * costs.sPct / 100 : price * (costs.eTx + costs.ePp) / 100 + costs.eList;
+  return price - fees - costOf(p.id) - orderShare(channel);
+}
+function suggest(p, channel, marginPct) {
+  const m = marginPct / 100;
+  const den = channel === "website" ? 1 - costs.sPct / 100 - m : 1 - (costs.eTx + costs.ePp) / 100 - m;
+  const fixed = costOf(p.id) + orderShare(channel) + (channel === "etsy" ? costs.eList : 0);
+  if (den <= 0.02) return null;
+  const step = Number(P.round) || 0.25;
+  return Math.max(0.5, Math.ceil((fixed / den) / step - 1e-9) * step);
+}
+
+/* ---------- PRICING ---------- */
+$("pr-tw").value = P.tw; $("pr-te").value = P.te; $("pr-ipo").value = P.ipo; $("pr-round").value = P.round;
+["pr-tw", "pr-te", "pr-ipo", "pr-round"].forEach(id => $(id).addEventListener("input", () => {
+  P.tw = num($("pr-tw").value); P.te = num($("pr-te").value); P.ipo = Math.max(1, num($("pr-ipo").value) || 1); P.round = $("pr-round").value;
+  store.set("pricing", P); renderPricing();
+}));
+let suggestedWeb = {};
+function renderPricing() {
+  suggestedWeb = {};
+  const rows = catalog.map(p => {
+    const w = suggest(p, "website", P.tw), e = suggest(p, "etsy", P.te);
+    if (w) suggestedWeb[p.id] = w;
+    const curM = p.price > 0 ? unitProfit(p, "website") / p.price * 100 : 0;
+    const cls = w == null ? "" : w > p.price + 0.001 ? "up" : w < p.price - 0.001 ? "down" : "";
+    return `<div class="prow"><span class="nm">${esc(p.name)}<small>now ${money(p.price)} · ${pct(curM)} margin · cost ${money(costOf(p.id))}</small></span>
+      <span>${money(p.price)}</span><span class="${cls}">${w == null ? "–" : money(w)}</span><span>${e == null ? "–" : money(e)}</span></div>`;
+  }).join("");
+  $("ptable").innerHTML = `<div class="prow h"><span>Product</span><span>Now</span><span>Website</span><span>Etsy</span></div>` + rows +
+    `<p class="hint">Yellow = suggested price is higher than now. Green = you could charge less and still hit your target. A dash means the target margin isn't reachable after fees.</p>`;
+}
+function pricesToApply() {
+  const raiseOnly = $("pr-raise").checked, out = {};
+  for (const [id, v] of Object.entries(suggestedWeb)) {
+    const cur = catalog.find(p => p.id === id).price;
+    if (Math.abs(v - cur) < 0.005) continue;
+    if (raiseOnly && v < cur) continue;
+    out[id] = v;
+  }
+  return out;
+}
+$("applyWeb").addEventListener("click", () => {
+  const ch = pricesToApply(), n = Object.keys(ch).length;
+  if (!n) return msg($("applyMsg"), "Nothing to change: your website prices already match these suggestions.", true);
+  $("applyText").textContent = `Change ${n} website price${n === 1 ? "" : "s"}? ` + Object.entries(ch).map(([id, v]) => `${catalog.find(p => p.id === id).name}: ${money(catalog.find(p => p.id === id).price)} → ${money(v)}`).join("; ") + ". You can change them back any time in CMA Settings.";
+  $("applyConfirm").hidden = false; $("applyWeb").hidden = true; $("applyMsg").hidden = true;
+});
+$("applyNo").addEventListener("click", () => { $("applyConfirm").hidden = true; $("applyWeb").hidden = false; });
+$("applyYes").addEventListener("click", async () => {
+  const pin = getPin();
+  const btn = $("applyYes"); btn.disabled = true;
+  try {
+    if (!pin) throw new Error("Unlock with your PIN on the Sales tab (or in CMA Settings) first.");
+    const prices = Object.fromEntries(Object.entries(pricesToApply()).map(([id, v]) => [id, Math.round(v * 100)]));
+    const r = await fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pin, prices }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || "Couldn't update prices.");
+    if (Array.isArray(d.catalog)) { catalog = d.catalog.map(p => ({ id: p.id, name: p.name, price: p.price / 100 })); renderItems(); renderCosts(); calc(); }
+    msg($("applyMsg"), `Updated ${Object.keys(prices).length} website price${Object.keys(prices).length === 1 ? "" : "s"}. The store shows them right away.`, true);
+  } catch (err) { msg($("applyMsg"), err.message); }
+  finally { btn.disabled = false; $("applyConfirm").hidden = true; $("applyWeb").hidden = false; renderPricing(); }
+});
+
+/* ---------- PRINT TIME ---------- */
+$("hr-day").value = hrDay;
+$("hr-day").addEventListener("input", () => { hrDay = num($("hr-day").value); store.set("hrday", hrDay); renderRank(); });
+function renderHours() {
+  $("ptimes").innerHTML = catalog.map(p => `<div class="pt" data-id="${p.id}"><span>${esc(p.name)}</span><div class="min"><input inputmode="decimal" aria-label="Print minutes for ${esc(p.name)}" value="${minutes[p.id] != null ? minutes[p.id] : ""}" placeholder="0"></div></div>`).join("");
+  renderRank();
+}
+$("ptimes").addEventListener("input", e => {
+  const row = e.target.closest(".pt"); if (!row) return;
+  const v = num(e.target.value);
+  if (e.target.value.trim() === "" || v <= 0) delete minutes[row.dataset.id]; else minutes[row.dataset.id] = v;
+  store.set("minutes", minutes); renderRank();
+});
+function renderRank() {
+  const list = catalog.filter(p => minutes[p.id] > 0).map(p => {
+    const up = unitProfit(p, "website");
+    return { p, up, perHr: up / (minutes[p.id] / 60) };
+  }).sort((a, b) => b.perHr - a.perHr);
+  if (!list.length) { $("rank").innerHTML = `<p class="empty">Type print times below to see the ranking.</p>`; $("hrDay").innerHTML = ""; return; }
+  const max = Math.max(...list.map(x => x.perHr), 0.01);
+  $("rank").innerHTML = list.map((x, i) => `<div class="rk"><span class="n">${i + 1}</span><span>${esc(x.p.name)}</span>
+    <span class="v ${x.perHr < 0 ? "bad" : ""}">${money(x.perHr)}/hr<small>${money(x.up)} each · ${minutes[x.p.id]} min</small></span>
+    <span class="bar"><i style="width:${Math.max(0, x.perHr / max * 100).toFixed(0)}%"></i></span></div>`).join("");
+  const best = list[0], worst = list[list.length - 1];
+  $("hrDay").innerHTML = hrDay > 0
+    ? `Printing <b>${esc(best.p.name)}</b> for ${hrDay} hours a day earns about <b>${money(best.perHr * hrDay)}</b> a day` +
+      (list.length > 1 ? `, vs ${money(worst.perHr * hrDay)} for ${esc(worst.p.name)}.` : ".") + ` <span class="hint">Only counts if those prints actually sell.</span>`
+    : "";
+}
+
+/* ---------- SALES ---------- */
+const getPin = () => { try { return localStorage.getItem("cma-admin-pin") || ""; } catch (e) { return ""; } };
+const setPin = v => { try { localStorage.setItem("cma-admin-pin", v); } catch (e) {} };
+function msg(el, text, good) { el.textContent = text; el.classList.toggle("good", !!good); el.hidden = false; }
+let sales = null, period = store.get("period", "month");
+async function api(body) {
+  const r = await fetch("/api/sales", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pin: getPin(), ...body }) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(d.error || "Something went wrong (error " + r.status + ")."); e.status = r.status; throw e; }
+  return d;
+}
+async function openSales(force) {
+  if (!getPin()) { $("pinbox").hidden = false; $("salesbody").hidden = true; return; }
+  if (sales && !force) { renderSales(); return; }
+  $("salesbody").hidden = false; $("pinbox").hidden = true;
+  $("kpis").innerHTML = `<p class="empty">Loading your sales…</p>`;
+  try { sales = await api({ action: "list" }); renderSales(); }
+  catch (err) {
+    if (err.status === 401 || err.status === 429) { $("pinbox").hidden = false; $("salesbody").hidden = true; msg($("pinmsg"), err.message); }
+    else $("kpis").innerHTML = `<p class="empty">${esc(err.message)}</p>`;
+  }
+}
+$("unlock").addEventListener("click", async () => {
+  const v = $("pin").value.trim(); if (!v) return msg($("pinmsg"), "Type your PIN first.");
+  setPin(v); sales = null; $("pinmsg").hidden = true; await openSales(true);
+});
+$("pin").addEventListener("keydown", e => { if (e.key === "Enter") $("unlock").click(); });
+
+function orderMoney(o) {
+  const items = o.items.reduce((t, i) => t + i.unit * i.qty, 0) / 100;
+  const units = o.items.reduce((t, i) => t + i.qty, 0);
+  const ship = (o.shipping || 0) / 100, disc = (o.discount || 0) / 100;
+  const gross = Math.max(0, items - disc + ship);
+  let fees = 0;
+  if (o.channel === "website") fees = gross * costs.sPct / 100 + costs.sFix;
+  else if (o.channel === "etsy") fees = gross * (costs.eTx + costs.ePp) / 100 + costs.ePf + costs.eList * units + (o.offsiteAds ? Math.min(gross * costs.eAds / 100, 100) : 0);
+  const avgCost = catalog.reduce((t, p) => t + costOf(p.id), 0) / catalog.length;
+  const making = o.items.reduce((t, i) => t + (i.pid ? costOf(i.pid) : avgCost) * i.qty, 0);
+  const shipCosts = o.channel === "other" ? 0 : costs.pack + costs.label;
+  const profit = gross - fees - making - shipCosts;
+  return { gross, profit, units };
+}
+function inPeriod(d) {
+  const now = new Date(), y = now.getFullYear(), m = now.getMonth();
+  const ymd = x => x.toISOString().slice(0, 10);
+  if (period === "month") return d >= ymd(new Date(Date.UTC(y, m, 1)));
+  if (period === "last") return d >= ymd(new Date(Date.UTC(y, m - 1, 1))) && d < ymd(new Date(Date.UTC(y, m, 1)));
+  if (period === "30") return d >= ymd(new Date(Date.now() - 30 * 864e5));
+  if (period === "year") return d >= y + "-01-01";
+  return true;
+}
+let showAll = false;
+function renderSales() {
+  if (!sales) return;
+  document.querySelectorAll("#periods [data-p]").forEach(b => b.setAttribute("aria-pressed", b.dataset.p === period));
+  const all = [...(sales.website || []), ...(sales.manual || []).map(m => ({ ...m, manual: true }))].sort((a, b) => (b.date + b.id).localeCompare(a.date + a.id));
+  const list = all.filter(o => inPeriod(o.date));
+  const live = list.filter(o => !o.refunded);
+  const tot = { n: 0, gross: 0, profit: 0 }, by = { website: { n: 0, gross: 0, profit: 0 }, etsy: { n: 0, gross: 0, profit: 0 }, other: { n: 0, gross: 0, profit: 0 } };
+  const best = {};
+  live.forEach(o => {
+    const m = orderMoney(o);
+    tot.n++; tot.gross += m.gross; tot.profit += m.profit;
+    const b = by[o.channel] || by.other; b.n++; b.gross += m.gross; b.profit += m.profit;
+    o.items.forEach(i => { const k = i.pid || i.name; best[k] = best[k] || { name: i.name, units: 0, rev: 0 }; best[k].units += i.qty; best[k].rev += i.unit * i.qty / 100; });
+  });
+  const margin = tot.gross ? tot.profit / tot.gross * 100 : NaN;
+  $("kpis").innerHTML = [["Orders", tot.n], ["Revenue", money(tot.gross)], ["Profit", `<span class="${tot.profit >= 0 ? "good" : "bad"}">${money(tot.profit)}</span>`], ["Margin", pct(margin)]]
+    .map(([k, v]) => `<div class="kpi"><span>${k}</span><b>${v}</b></div>`).join("");
+  const line = (lbl, b) => b.n ? `<div><b>${lbl}:</b> ${b.n} order${b.n === 1 ? "" : "s"} · ${money(b.gross)} revenue · ${money(b.profit)} profit · avg order ${money(b.gross / b.n)}</div>` : "";
+  $("split").innerHTML = line("Website", by.website) + line("Etsy", by.etsy) + line("Other", by.other) || `<div>No sales in this period yet.</div>`;
+  $("salesnote").textContent = (sales.stripeError ? "Couldn't load website orders from Stripe: " + sales.stripeError + " " : "") +
+    "Website orders come from Stripe automatically. Profit uses the costs on your Costs tab. Refunded orders aren't counted.";
+  const bl = Object.values(best).sort((a, b) => b.units - a.units).slice(0, 8);
+  $("best").innerHTML = bl.length ? `<div class="best"><span class="h">PRODUCT</span><span class="h r">SOLD</span><span class="h r">REVENUE</span>` +
+    bl.map(x => `<span>${esc(x.name)}</span><span class="r">${x.units}</span><span class="r">${money(x.rev)}</span>`).join("") + `</div>` : `<p class="empty">No sales in this period yet.</p>`;
+  const shown = showAll ? list : list.slice(0, 40);
+  $("orders").innerHTML = shown.length ? `<div class="olist">` + shown.map(o => {
+    const m = orderMoney(o);
+    const badge = o.channel === "website" ? `<span class="badge b-web">Web</span>` : o.channel === "etsy" ? `<span class="badge b-etsy">Etsy</span>` : `<span class="badge b-other">Other</span>`;
+    const items = o.items.map(i => `${i.qty}× ${esc(i.name)}`).join(", ");
+    const d = new Date(o.date + "T12:00:00").toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+    return `<div class="ord${o.refunded ? " refunded" : ""}" data-id="${esc(o.id)}"><span class="top">${badge}${d}${o.refunded ? " · refunded" : ""}</span>
+      <span class="amt">${money(m.gross)}<small class="${m.profit >= 0 ? "good" : "bad"}">${money(m.profit)} profit</small></span>
+      <span class="sub">${items}${o.note ? " · " + esc(o.note) : ""}</span>
+      ${o.manual ? `<button type="button" class="del" data-del="${esc(o.id)}">Delete</button>` : ""}</div>`;
+  }).join("") + `</div>` + (list.length > shown.length ? `<button class="ghost" type="button" id="moreOrders">Show all ${list.length}</button>` : "")
+    : `<p class="empty">No orders in this period yet.</p>`;
+}
+$("periods").addEventListener("click", e => { const b = e.target.closest("[data-p]"); if (!b) return; period = b.dataset.p; store.set("period", period); showAll = false; renderSales(); });
+$("orders").addEventListener("click", async e => {
+  if (e.target.id === "moreOrders") { showAll = true; renderSales(); return; }
+  const d = e.target.closest("[data-del]"); if (!d) return;
+  if (d.dataset.confirm !== "1") { d.dataset.confirm = "1"; d.textContent = "Tap again to delete"; setTimeout(() => { if (d.isConnected) { d.dataset.confirm = ""; d.textContent = "Delete"; } }, 4000); return; }
+  d.disabled = true;
+  try { await api({ action: "delete", id: d.dataset.del }); sales.manual = sales.manual.filter(s => s.id !== d.dataset.del); renderSales(); }
+  catch (err) { d.textContent = err.message; }
+});
+
+/* add an Etsy / other sale */
+let asQty = {}, asPrice = {};
+function renderAddItems() {
+  $("as-items").innerHTML = catalog.map(p => {
+    const q = asQty[p.id] || 0;
+    return `<div class="it${q ? " has" : ""}" data-id="${p.id}"><div class="nm">${esc(p.name)}${q ? `<div class="money" style="margin-top:6px;max-width:130px"><input inputmode="decimal" class="asprice" aria-label="Price each" value="${(asPrice[p.id] != null ? asPrice[p.id] : p.price).toFixed(2)}"></div>` : `<small>${money(p.price)} on the website</small>`}</div>
+      <div class="step"><button type="button" data-d="-1" aria-label="One fewer">−</button><span>${q}</span><button type="button" data-d="1" aria-label="One more">+</button></div></div>`;
+  }).join("");
+  previewSale();
+}
+function draftSale() {
+  return {
+    date: $("as-date").value, channel: $("as-ch").value,
+    items: Object.entries(asQty).filter(([, q]) => q > 0).map(([pid, q]) => ({ pid, qty: q, unit: Math.round((asPrice[pid] != null ? asPrice[pid] : catalog.find(p => p.id === pid).price) * 100) })),
+    shipping: Math.round(num($("as-ship").value) * 100), discount: Math.round(num($("as-disc").value) * 100),
+    offsiteAds: $("as-ads").checked, note: $("as-note").value
+  };
+}
+function previewSale() {
+  const d = draftSale();
+  if (!d.items.length) { $("as-preview").innerHTML = "Add the items that sold."; return; }
+  const items = d.items.map(i => ({ ...i, name: catalog.find(p => p.id === i.pid).name }));
+  const m = orderMoney({ ...d, items });
+  $("as-preview").innerHTML = `Revenue <b>${money(m.gross)}</b> · profit <b class="${m.profit >= 0 ? "good" : "bad"}">${money(m.profit)}</b> after fees, costs, packaging and label.`;
+}
+$("addSaleBtn").addEventListener("click", () => {
+  asQty = {}; asPrice = {}; $("as-date").value = new Date().toLocaleDateString("en-CA");
+  $("as-ship").value = ""; $("as-disc").value = ""; $("as-ads").checked = false; $("as-note").value = ""; $("as-msg").hidden = true;
+  $("addsale").hidden = false; $("addSaleBtn").hidden = true; renderAddItems();
+});
+$("as-cancel").addEventListener("click", () => { $("addsale").hidden = true; $("addSaleBtn").hidden = false; });
+$("as-items").addEventListener("click", e => {
+  const b = e.target.closest("[data-d]"); if (!b) return;
+  const id = b.closest(".it").dataset.id;
+  asQty[id] = Math.max(0, Math.min(999, (asQty[id] || 0) + Number(b.dataset.d))); if (!asQty[id]) delete asQty[id];
+  renderAddItems();
+});
+$("as-items").addEventListener("input", e => {
+  if (!e.target.classList.contains("asprice")) return;
+  asPrice[e.target.closest(".it").dataset.id] = num(e.target.value); previewSale();
+});
+["as-ship", "as-disc", "as-ads", "as-ch"].forEach(id => $(id).addEventListener("input", previewSale));
+$("addsale").addEventListener("submit", async e => {
+  e.preventDefault();
+  const d = draftSale();
+  if (!d.items.length) return msg($("as-msg"), "Add at least one item.");
+  const btn = $("as-save"); btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    const r = await api({ action: "add", sale: d });
+    sales.manual.push(r.sale); $("addsale").hidden = true; $("addSaleBtn").hidden = false; renderSales();
+  } catch (err) { msg($("as-msg"), err.message); }
+  finally { btn.disabled = false; btn.textContent = "Save sale"; }
+});
+
+/* refresh the new screens whenever costs or prices change */
+window.onCostsChanged = () => {
+  const t = store.get("tab", "calc");
+  if (t === "pricing") renderPricing();
+  if (t === "hours") renderRank();
+  if (t === "sales" && sales) renderSales();
+};
+showTab(store.get("tab", "calc"));
 </script>
 </body>
 </html>
