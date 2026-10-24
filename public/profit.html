@@ -155,6 +155,27 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
 .min input { width: 100%; min-width: 0; border: 0; background: none; color: var(--ink); font: 16px var(--f-body); padding: 9px 8px; }
 .min input:focus { outline: none; } .min::after { content: "min"; padding-right: 8px; color: var(--muted); font-size: 13px; }
 .empty { color: var(--muted); font-size: 14px; padding: 6px 0; }
+.fx { display: grid; grid-template-columns: minmax(0, 1fr) 92px 76px 28px; gap: 6px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.fx .plain { padding: 8px; font-size: 15px; }
+.fx .money input { padding: 8px 6px; font-size: 15px; }
+.fx .x { background: none; border: 0; color: var(--muted); font-size: 20px; cursor: pointer; }
+.meter { height: 8px; border-radius: 4px; background: var(--bg); overflow: hidden; margin: 8px 0 4px; }
+.meter i { display: block; height: 100%; background: var(--good); }
+.flhead, .fl { display: grid; grid-template-columns: minmax(0, 1fr) 70px 74px 58px; gap: 6px; align-items: center; }
+.flhead { font: 600 10.5px var(--f-mono); letter-spacing: .05em; color: var(--muted); text-transform: uppercase; }
+.flhead span:not(:first-child), .fl > span:last-child { text-align: right; }
+.fl { padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.fl .plain { padding: 8px 6px; font-size: 15px; }
+.fl .money input { padding: 8px 4px; font-size: 15px; }
+.fl > span:last-child { font-variant-numeric: tabular-nums; font-weight: 600; }
+.cmp { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 14px; font-size: 14px; font-variant-numeric: tabular-nums; margin-top: 4px; }
+.cmp .h { font: 600 11px var(--f-mono); letter-spacing: .06em; color: var(--muted); }
+.cmp .r { text-align: right; }
+.cmp .tot { font-weight: 700; border-top: 1px solid var(--line); padding-top: 6px; }
+.bsave { padding: 10px 0; border-bottom: 1px solid var(--line); display: grid; gap: 2px; }
+.bsave:last-child { border-bottom: 0; }
+.bsave b { font-size: 15px; }
+.bsave span { font-size: 13px; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -168,6 +189,7 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
     <button type="button" role="tab" data-tab="calc">Calculator</button>
     <button type="button" role="tab" data-tab="sales">Sales</button>
     <button type="button" role="tab" data-tab="pricing">Pricing</button>
+    <button type="button" role="tab" data-tab="bundles">Bundles</button>
     <button type="button" role="tab" data-tab="hours">Print time</button>
     <button type="button" role="tab" data-tab="costs">Costs</button>
   </nav>
@@ -227,6 +249,13 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
         <p class="hint" id="salesnote"></p>
       </section>
       <section class="card">
+        <h2>Monthly costs &amp; break-even</h2>
+        <p class="hint">Costs you pay no matter how much you sell. The app works out how many orders a month cover them.</p>
+        <div id="fixedRows"></div>
+        <button class="ghost" id="addFixed" type="button">+ Add a monthly cost</button>
+        <div class="answer" id="breakeven"></div>
+      </section>
+      <section class="card">
         <h2>Best sellers</h2>
         <div id="best"></div>
       </section>
@@ -276,6 +305,38 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
       <p class="msg" id="applyMsg" hidden></p>
       <p class="hint">Etsy prices have to be changed in Etsy yourself.</p>
     </section>
+    <section class="card">
+      <h2>What if I raise my prices?</h2>
+      <p class="hint">Higher prices can lose some sales. This shows how many you could lose and still make the same profit.</p>
+      <div class="row2">
+        <label class="f">Raise every price by<div class="money"><input id="wi-amt" inputmode="decimal" value="1.00"></div></label>
+        <label class="f">Sales mix<select id="wi-mix" class="plain"><option value="sales">Based on what actually sells</option><option value="even">Every product equally</option></select></label>
+      </div>
+      <div id="whatif"></div>
+    </section>
+  </div>
+
+  <!-- (pricing what-if lives inside the pricing panel) -->
+  <!-- BUNDLES -->
+  <div class="panel" data-panel="bundles" hidden>
+    <section class="card">
+      <h2>Bundle builder</h2>
+      <p class="hint">Put a kit together, set a bundle price, and see what you'd make on the website and on Etsy.</p>
+      <label class="f">Bundle name<input type="text" id="bn-name" class="plain" maxlength="60" placeholder="e.g. Lee Breech-Lock Starter Kit"></label>
+      <div class="items" id="bn-items"></div>
+      <div class="row2">
+        <label class="f">Discount<select id="bn-mode" class="plain"><option value="pct">% off the regular price</option><option value="price">Set a bundle price</option></select></label>
+        <label class="f" id="bn-pctwrap">Percent off<div class="pct"><input id="bn-pct" inputmode="decimal" value="10"></div></label>
+        <label class="f" id="bn-pricewrap" hidden>Bundle price<div class="money"><input id="bn-price" inputmode="decimal"></div></label>
+      </div>
+      <div id="bn-result"></div>
+      <div class="actions"><button class="btn" id="bn-save" type="button">Save bundle</button><button class="ghost" id="bn-clear" type="button">Start over</button></div>
+      <p class="msg" id="bn-msg" hidden></p>
+    </section>
+    <section class="card">
+      <h2>Saved bundles</h2>
+      <div id="bn-saved"></div>
+    </section>
   </div>
 
   <!-- PRINT TIME -->
@@ -296,6 +357,19 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
 
   <!-- COSTS -->
   <div class="panel" data-panel="costs" hidden>
+  <section class="card">
+    <h2>Filament calculator</h2>
+    <p class="hint">Enter your spool price and how many grams each part uses (your slicer shows this). Extras are things like magnets, rubber feet, and mounting strips.</p>
+    <div class="row2">
+      <label class="f">Spool price<div class="money"><input id="fl-price" inputmode="decimal"></div></label>
+      <label class="f">Spool weight<small>grams of filament</small><input id="fl-g" class="plain" inputmode="decimal"></label>
+    </div>
+    <div class="answer" id="fl-pergram"></div>
+    <div class="flhead"><span>Product</span><span>Grams</span><span>Extras</span><span>Cost</span></div>
+    <div id="flrows"></div>
+    <button class="btn wide" id="fl-apply" type="button">Use these as my product costs</button>
+    <p class="msg" id="fl-msg" hidden></p>
+  </section>
   <section class="card">
     <details class="costs" id="costs" open>
       <summary><h2>Your costs</h2></summary>
@@ -497,7 +571,7 @@ const esc = t => String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g,
 const pct = n => (Number.isFinite(n) ? n.toFixed(1) : "–") + "%";
 
 /* ---------- tabs ---------- */
-const TABS = ["calc", "sales", "pricing", "hours", "costs"];
+const TABS = ["calc", "sales", "pricing", "bundles", "hours", "costs"];
 function showTab(t) {
   if (!TABS.includes(t)) t = "calc";
   document.querySelectorAll("[data-panel]").forEach(el => { el.hidden = el.dataset.panel !== t; });
@@ -506,6 +580,8 @@ function showTab(t) {
   if (t === "sales") openSales();
   if (t === "pricing") renderPricing();
   if (t === "hours") renderHours();
+  if (t === "bundles" && window.renderBundles) window.renderBundles();
+  if (t === "costs" && window.renderFil) window.renderFil();
   window.scrollTo(0, 0);
 }
 $("tabs").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if (b) showTab(b.dataset.tab); });
@@ -548,6 +624,7 @@ $("pr-tw").value = P.tw; $("pr-te").value = P.te; $("pr-ipo").value = P.ipo; $("
 }));
 let suggestedWeb = {};
 function renderPricing() {
+  if (window.renderWhatIf) setTimeout(window.renderWhatIf, 0);
   suggestedWeb = {};
   const rows = catalog.map(p => {
     const w = suggest(p, "website", P.tw), e = suggest(p, "etsy", P.te);
@@ -676,6 +753,7 @@ function inPeriod(d) {
 let showAll = false;
 function renderSales() {
   if (!sales) return;
+  if (window.renderBreakeven) setTimeout(window.renderBreakeven, 0);
   document.querySelectorAll("#periods [data-p]").forEach(b => b.setAttribute("aria-pressed", b.dataset.p === period));
   const all = [...(sales.website || []), ...(sales.manual || []).map(m => ({ ...m, manual: true }))].sort((a, b) => (b.date + b.id).localeCompare(a.date + a.id));
   const list = all.filter(o => inPeriod(o.date));
@@ -781,6 +859,220 @@ window.onCostsChanged = () => {
   if (t === "pricing") renderPricing();
   if (t === "hours") renderRank();
   if (t === "sales" && sales) renderSales();
+};
+showTab(store.get("tab", "calc"));
+</script>
+
+<script>
+/* ===================== Batch 2: filament calculator, bundles, price-raise what-if, monthly break-even ===================== */
+
+/* ---------- FILAMENT CALCULATOR (Costs tab) ---------- */
+const FL = { price: 20, g: 1000, grams: {}, extras: {}, ...store.get("fil", {}) };
+$("fl-price").value = FL.price; $("fl-g").value = FL.g;
+const perGram = () => (FL.g > 0 ? FL.price / FL.g : 0);
+const flCost = id => (FL.grams[id] || 0) * perGram() + (FL.extras[id] || 0);
+function renderFil() {
+  $("flrows").innerHTML = catalog.map(p => `<div class="fl" data-id="${p.id}"><span>${esc(p.name)}</span>
+    <input class="plain fg" inputmode="decimal" aria-label="Grams for ${esc(p.name)}" value="${FL.grams[p.id] != null ? FL.grams[p.id] : ""}" placeholder="g">
+    <div class="money"><input class="fe" inputmode="decimal" aria-label="Extras for ${esc(p.name)}" value="${FL.extras[p.id] != null ? FL.extras[p.id].toFixed(2) : ""}" placeholder="0.00"></div>
+    <span>${FL.grams[p.id] ? money(flCost(p.id)) : "–"}</span></div>`).join("");
+  updFil();
+}
+function updFil() {
+  $("fl-pergram").innerHTML = perGram() ? `Your filament costs <b>${money(perGram() * 100)}</b> per 100 g (${(perGram() * 100).toFixed(1)}¢ per gram).` : "Enter your spool price and weight.";
+  document.querySelectorAll(".fl").forEach(r => { const id = r.dataset.id; r.lastElementChild.textContent = FL.grams[id] ? money(flCost(id)) : "–"; });
+}
+function saveFil() { store.set("fil", FL); updFil(); }
+["fl-price", "fl-g"].forEach(id => $(id).addEventListener("input", () => { FL.price = num($("fl-price").value); FL.g = num($("fl-g").value); saveFil(); }));
+$("flrows").addEventListener("input", e => {
+  const id = e.target.closest(".fl").dataset.id, v = num(e.target.value), blank = e.target.value.trim() === "";
+  const bag = e.target.classList.contains("fg") ? FL.grams : FL.extras;
+  if (blank || v <= 0) delete bag[id]; else bag[id] = v;
+  saveFil();
+});
+$("fl-apply").addEventListener("click", () => {
+  const ids = catalog.filter(p => FL.grams[p.id] > 0).map(p => p.id);
+  if (!ids.length) return msg($("fl-msg"), "Type the grams for at least one product first.");
+  ids.forEach(id => { itemCost[id] = Math.round(flCost(id) * 100) / 100; });
+  store.set("itemCost", itemCost); renderCosts(); renderItems(); calc();
+  msg($("fl-msg"), `Updated the cost of ${ids.length} product${ids.length === 1 ? "" : "s"}. Every tab now uses the new costs.`, true);
+});
+window.renderFil = renderFil;
+
+/* ---------- BUNDLES ---------- */
+let bnQty = {}, bundles = store.get("bundles", []);
+function bnItems() { return Object.entries(bnQty).filter(([, q]) => q > 0).map(([pid, q]) => ({ pid, qty: q, name: catalog.find(p => p.id === pid).name, unit: Math.round(catalog.find(p => p.id === pid).price * 100) })); }
+function bnPrice(regular) {
+  if ($("bn-mode").value === "price") { const v = num($("bn-price").value); return v > 0 ? v : regular; }
+  return Math.max(0, regular * (1 - num($("bn-pct").value) / 100));
+}
+function bundleNumbers(items, price) {
+  const regular = items.reduce((t, i) => t + i.unit * i.qty, 0) / 100;
+  const disc = Math.max(0, regular - price);
+  const webShip = autoShip(price), etsyShip = shipFlat();
+  const web = orderMoney({ channel: "website", items, shipping: Math.round(webShip * 100), discount: Math.round(disc * 100) });
+  const webFull = orderMoney({ channel: "website", items, shipping: Math.round(autoShip(regular) * 100), discount: 0 });
+  const etsy = orderMoney({ channel: "etsy", items, shipping: Math.round(etsyShip * 100), discount: Math.round(disc * 100) });
+  return { regular, price, disc, webShip, web, webFull, etsy };
+}
+function renderBundles() {
+  $("bn-items").innerHTML = catalog.map(p => { const q = bnQty[p.id] || 0;
+    return `<div class="it${q ? " has" : ""}" data-id="${p.id}"><div class="nm">${esc(p.name)}<small>${money(p.price)} · costs ${money(costOf(p.id))}</small></div>
+      <div class="step"><button type="button" data-d="-1" aria-label="One fewer">−</button><span>${q}</span><button type="button" data-d="1" aria-label="One more">+</button></div></div>`; }).join("");
+  renderBundleResult(); renderSavedBundles();
+}
+function renderBundleResult() {
+  const items = bnItems();
+  if (!items.length) { $("bn-result").innerHTML = `<p class="empty">Add the products in this bundle.</p>`; return; }
+  const regular = items.reduce((t, i) => t + i.unit * i.qty, 0) / 100;
+  if ($("bn-mode").value === "price" && !$("bn-price").value) $("bn-price").placeholder = regular.toFixed(2);
+  const n = bundleNumbers(items, bnPrice(regular));
+  const m = (x, g) => `<span class="r ${x.profit >= 0 ? "" : "bad"}">${money(x.profit)} <small class="${x.profit / g >= .35 ? "good" : x.profit / g >= .15 ? "warn" : "bad"}">${pct(g ? x.profit / g * 100 : 0)}</small></span>`;
+  $("bn-result").innerHTML = `<div class="answer">Regular price <b>${money(n.regular)}</b> → bundle price <b>${money(n.price)}</b> (buyer saves ${money(n.disc)}).` +
+    ` Website shipping: ${n.webShip ? money(n.webShip) : "free"}.</div>
+    <div class="cmp"><span class="h">YOU MAKE</span><span class="h r">PROFIT</span><span class="h r">REVENUE</span>
+      <span>Website, bundle price</span>${m(n.web, n.web.gross)}<span class="r">${money(n.web.gross)}</span>
+      <span>Website, full price</span>${m(n.webFull, n.webFull.gross)}<span class="r">${money(n.webFull.gross)}</span>
+      <span>Etsy, bundle price</span>${m(n.etsy, n.etsy.gross)}<span class="r">${money(n.etsy.gross)}</span></div>
+    <p class="hint">The discount costs you ${money(n.webFull.profit - n.web.profit)} per bundle on the website. It's worth it if the bundle sells more pieces than people would buy one at a time.</p>`;
+}
+function renderSavedBundles() {
+  $("bn-saved").innerHTML = bundles.length ? bundles.map((b, i) => {
+    const items = b.items.filter(x => catalog.some(p => p.id === x.pid)).map(x => { const p = catalog.find(c => c.id === x.pid); return { pid: x.pid, qty: x.qty, name: p.name, unit: Math.round(p.price * 100) }; });
+    if (!items.length) return "";
+    const regular = items.reduce((t, x) => t + x.unit * x.qty, 0) / 100;
+    const price = b.mode === "price" ? b.price : regular * (1 - b.pct / 100);
+    const n = bundleNumbers(items, price);
+    return `<div class="bsave"><b>${esc(b.name)}</b><span>${items.map(x => `${x.qty}× ${esc(x.name)}`).join(", ")}</span>
+      <span>${money(price)} (was ${money(regular)}) · website profit <b class="${n.web.profit >= 0 ? "good" : "bad"}">${money(n.web.profit)}</b> · Etsy ${money(n.etsy.profit)}</span>
+      <div class="actions"><button class="ghost" type="button" data-load="${i}">Edit</button><button class="del" type="button" data-bdel="${i}">Delete</button></div></div>`;
+  }).join("") : `<p class="empty">No saved bundles yet.</p>`;
+}
+$("bn-items").addEventListener("click", e => {
+  const b = e.target.closest("[data-d]"); if (!b) return;
+  const id = b.closest(".it").dataset.id;
+  bnQty[id] = Math.max(0, Math.min(50, (bnQty[id] || 0) + Number(b.dataset.d))); if (!bnQty[id]) delete bnQty[id];
+  renderBundles();
+});
+$("bn-mode").addEventListener("change", () => { const pr = $("bn-mode").value === "price"; $("bn-pricewrap").hidden = !pr; $("bn-pctwrap").hidden = pr; renderBundleResult(); });
+["bn-pct", "bn-price"].forEach(id => $(id).addEventListener("input", renderBundleResult));
+$("bn-clear").addEventListener("click", () => { bnQty = {}; $("bn-name").value = ""; $("bn-price").value = ""; $("bn-msg").hidden = true; renderBundles(); });
+$("bn-save").addEventListener("click", () => {
+  const items = bnItems(); if (!items.length) return msg($("bn-msg"), "Add at least one product.");
+  const name = $("bn-name").value.trim() || "Bundle " + (bundles.length + 1);
+  const b = { name, items: items.map(i => ({ pid: i.pid, qty: i.qty })), mode: $("bn-mode").value, pct: num($("bn-pct").value), price: num($("bn-price").value) || items.reduce((t, i) => t + i.unit * i.qty, 0) / 100 };
+  const at = bundles.findIndex(x => x.name.toLowerCase() === name.toLowerCase());
+  if (at >= 0) bundles[at] = b; else bundles.push(b);
+  store.set("bundles", bundles); renderSavedBundles(); msg($("bn-msg"), `Saved "${name}" on this phone.`, true);
+});
+$("bn-saved").addEventListener("click", e => {
+  const l = e.target.closest("[data-load]"), d = e.target.closest("[data-bdel]");
+  if (l) {
+    const b = bundles[+l.dataset.load]; bnQty = Object.fromEntries(b.items.map(x => [x.pid, x.qty]));
+    $("bn-name").value = b.name; $("bn-mode").value = b.mode; $("bn-pct").value = b.pct; $("bn-price").value = b.mode === "price" ? b.price.toFixed(2) : "";
+    $("bn-mode").dispatchEvent(new Event("change")); renderBundles(); window.scrollTo(0, 0);
+  }
+  if (d) {
+    if (d.dataset.confirm !== "1") { d.dataset.confirm = "1"; d.textContent = "Tap again to delete"; return; }
+    bundles.splice(+d.dataset.bdel, 1); store.set("bundles", bundles); renderSavedBundles();
+  }
+});
+window.renderBundles = renderBundles;
+
+/* ---------- WHAT IF I RAISE PRICES (Pricing tab) ---------- */
+$("wi-mix").value = store.get("wimix", "sales");
+function unitsSold(days) {
+  const out = {};
+  if (!sales) return out;
+  const since = new Date(Date.now() - days * 864e5).toISOString().slice(0, 10);
+  [...(sales.website || []), ...(sales.manual || [])].filter(o => !o.refunded && o.date >= since)
+    .forEach(o => o.items.forEach(i => { if (i.pid) out[i.pid] = (out[i.pid] || 0) + i.qty; }));
+  return out;
+}
+function renderWhatIf() {
+  const amt = num($("wi-amt").value);
+  let w = {}, mixNote = "every product selling equally";
+  if ($("wi-mix").value === "sales") {
+    w = unitsSold(90);
+    if (Object.keys(w).length) mixNote = "your sales mix from the last 90 days";
+    else mixNote = sales ? "every product equally (no sales logged in the last 90 days yet)" : "every product equally (open the Sales tab once to use your real sales)";
+  }
+  if (!Object.keys(w).length) catalog.forEach(p => { w[p.id] = 1; });
+  let tw = 0, oldP = 0, newP = 0, oldE = 0, newE = 0;
+  catalog.forEach(p => { const k = w[p.id] || 0; if (!k) return; tw += k;
+    oldP += k * unitProfit(p, "website"); newP += k * unitProfit(p, "website", p.price + amt);
+    oldE += k * unitProfit(p, "etsy"); newE += k * unitProfit(p, "etsy", p.price + amt); });
+  if (!tw) { $("whatif").innerHTML = ""; return; }
+  oldP /= tw; newP /= tw; oldE /= tw; newE /= tw;
+  const line = (lbl, o, n) => {
+    if (n <= 0) return `<p><b>${lbl}:</b> still losing money per piece at that price.</p>`;
+    if (o <= 0) return `<p><b>${lbl}:</b> profit goes from ${money(o)} to <b>${money(n)}</b> per piece, turning a loss into a profit.</p>`;
+    const drop = (1 - o / n) * 100, gain = (n / o - 1) * 100;
+    return amt >= 0
+      ? `<p><b>${lbl}:</b> profit per piece goes from ${money(o)} to <b>${money(n)}</b> (+${gain.toFixed(0)}%). You could sell <b>${drop.toFixed(0)}% fewer pieces</b> and still make the same money.</p>`
+      : `<p><b>${lbl}:</b> profit per piece drops from ${money(o)} to <b>${money(n)}</b>. You'd need <b>${(o / n * 100 - 100).toFixed(0)}% more sales</b> to make the same money.</p>`;
+  };
+  $("whatif").innerHTML = `<div class="answer">${line("Website", oldP, newP)}${line("Etsy", oldE, newE)}<p class="hint" style="margin:0">Based on ${mixNote}, a typical ${P.ipo}-item order, and your costs.</p></div>`;
+}
+$("wi-amt").addEventListener("input", renderWhatIf);
+$("wi-mix").addEventListener("change", () => { store.set("wimix", $("wi-mix").value); if ($("wi-mix").value === "sales" && !sales && getPin()) openSalesQuiet(); renderWhatIf(); });
+async function openSalesQuiet() { try { sales = await api({ action: "list" }); renderWhatIf(); } catch (e) {} }
+window.renderWhatIf = renderWhatIf;
+
+/* ---------- MONTHLY COSTS & BREAK-EVEN (Sales tab) ---------- */
+let fixed = store.get("fixed", [{ name: "Domain (cmaprecision.com)", amount: 16.99, per: "year" }]);
+const monthly = f => (f.per === "year" ? f.amount / 12 : f.amount);
+function renderFixed() {
+  $("fixedRows").innerHTML = fixed.map((f, i) => `<div class="fx" data-i="${i}">
+    <input class="plain fn" value="${esc(f.name)}" placeholder="What it is" aria-label="Cost name">
+    <div class="money"><input class="fa" inputmode="decimal" value="${f.amount ? f.amount.toFixed(2) : ""}" placeholder="0.00" aria-label="Amount"></div>
+    <select class="plain fp" aria-label="How often"><option value="month"${f.per === "month" ? " selected" : ""}>/mo</option><option value="year"${f.per === "year" ? " selected" : ""}>/yr</option></select>
+    <button class="x" type="button" aria-label="Remove">×</button></div>`).join("") || `<p class="empty">No monthly costs yet.</p>`;
+  renderBreakeven();
+}
+function renderBreakeven() {
+  const total = fixed.reduce((t, f) => t + monthly(f), 0);
+  if (!total) { $("breakeven").innerHTML = "Add costs like your domain, printer parts, or Etsy subscription to see your break-even."; return; }
+  const now = new Date(), monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString("en-CA");
+  const since90 = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
+  const live = sales ? [...(sales.website || []), ...(sales.manual || [])].filter(o => !o.refunded) : [];
+  const recent = live.filter(o => o.date >= since90);
+  let avg, basis;
+  if (recent.length) { avg = recent.reduce((t, o) => t + orderMoney(o).profit, 0) / recent.length; basis = `your average profit of ${money(avg)} per order over the last 90 days`; }
+  else {
+    const typical = catalog.slice(0, Math.max(1, Math.round(P.ipo))).map(p => ({ pid: p.id, qty: 1, name: p.name, unit: Math.round(p.price * 100) }));
+    const it = typical.reduce((t, i) => t + i.unit, 0) / 100;
+    avg = orderMoney({ channel: "website", items: typical, shipping: Math.round(autoShip(it) * 100), discount: 0 }).profit;
+    basis = `an estimated ${money(avg)} profit per typical order`;
+  }
+  const need = avg > 0 ? Math.ceil(total / avg) : null;
+  const thisMonth = live.filter(o => o.date >= monthStart).reduce((t, o) => t + orderMoney(o).profit, 0);
+  const covered = Math.min(100, Math.max(0, thisMonth / total * 100));
+  $("breakeven").innerHTML = `Your fixed costs are <b>${money(total)}</b> a month. ` +
+    (need ? `You need about <b>${need} order${need === 1 ? "" : "s"} a month</b> to cover them, based on ${basis}.` : `Your orders aren't profitable yet, so they can't cover fixed costs.`) +
+    (sales ? `<div class="meter"><i style="width:${covered.toFixed(0)}%"></i></div>This month's profit so far: <b>${money(thisMonth)}</b> — ${thisMonth >= total ? `costs covered, <b>${money(thisMonth - total)}</b> beyond them.` : `${money(total - thisMonth)} to go.`}` : "");
+}
+$("fixedRows").addEventListener("input", e => {
+  const r = e.target.closest(".fx"); if (!r) return; const f = fixed[+r.dataset.i];
+  if (e.target.classList.contains("fn")) f.name = e.target.value;
+  if (e.target.classList.contains("fa")) f.amount = num(e.target.value);
+  if (e.target.classList.contains("fp")) f.per = e.target.value;
+  store.set("fixed", fixed); renderBreakeven();
+});
+$("fixedRows").addEventListener("change", e => { if (e.target.classList.contains("fp")) { fixed[+e.target.closest(".fx").dataset.i].per = e.target.value; store.set("fixed", fixed); renderBreakeven(); } });
+$("fixedRows").addEventListener("click", e => { if (!e.target.classList.contains("x")) return; fixed.splice(+e.target.closest(".fx").dataset.i, 1); store.set("fixed", fixed); renderFixed(); });
+$("addFixed").addEventListener("click", () => { fixed.push({ name: "", amount: 0, per: "month" }); store.set("fixed", fixed); renderFixed(); const ins = document.querySelectorAll("#fixedRows .fn"); if (ins.length) ins[ins.length - 1].focus(); });
+window.renderBreakeven = renderBreakeven;
+renderFixed();
+
+/* refresh hooks + reopen the last tab now that everything exists */
+const prevHook = window.onCostsChanged;
+window.onCostsChanged = () => {
+  if (prevHook) prevHook();
+  const t = store.get("tab", "calc");
+  if (t === "bundles") { renderBundleResult(); renderSavedBundles(); }
+  if (t === "pricing") renderWhatIf();
+  if (t === "sales") renderBreakeven();
 };
 showTab(store.get("tab", "calc"));
 </script>
