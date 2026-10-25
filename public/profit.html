@@ -200,6 +200,47 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
 .sdslider { width: 100%; accent-color: var(--red); height: 28px; margin: 0; }
 .sdamt.money::before { content: "$"; padding-left: 10px; color: var(--muted); font-weight: 600; }
 .sdamt.money::after { content: none; }
+
+/* ===== Decluttered layout ===== */
+body { font-size: 16px; }
+.menu { display: grid; gap: 10px; }
+.mi { display: grid; gap: 3px; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 16px; color: var(--ink); cursor: pointer; font: inherit; position: relative; }
+.mi b { font-size: 18px; }
+.mi span { color: var(--muted); font-size: 14px; padding-right: 22px; }
+.mi::after { content: "›"; position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--red); font-size: 28px; line-height: 1; }
+.mi:active { background: var(--raise); }
+.back { justify-self: start; background: none; border: 0; color: var(--red); font: 600 15px var(--f-body); padding: 4px 0; cursor: pointer; }
+.toolhead { display: grid; gap: 6px; }
+.toolhead h2 { font: 700 22px/1.2 var(--f-body); letter-spacing: 0; text-transform: none; color: var(--ink); }
+h2.hasinfo { display: flex; align-items: center; gap: 8px; }
+.info { flex: none; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); background: var(--raise); color: var(--muted); font: 600 14px/1 var(--f-body); cursor: pointer; padding: 0; }
+.info[aria-expanded="true"] { color: #fff; background: var(--red-deep); border-color: var(--red-deep); }
+p.hint.tip { background: var(--raise); border-radius: 8px; padding: 10px 12px; font-size: 14px; }
+.inner2 { display: grid; gap: 12px; margin-top: 12px; }
+details.break > summary { font-size: 15px; padding: 6px 0; color: var(--ink); font-weight: 600; }
+/* big answer cards */
+.hero { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.hcard { background: var(--raise); border-radius: 10px; padding: 14px 12px; display: grid; gap: 2px; min-width: 0; }
+.hcard .who { font: 600 11px var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.hcard .lbl { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.hcard .big { font: 800 34px/1.05 var(--f-body); font-variant-numeric: tabular-nums; }
+.hcard .mid { font: 700 18px/1.2 var(--f-body); font-variant-numeric: tabular-nums; }
+.hcard .sm { font-size: 13.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.hcard .sm b { color: var(--ink); }
+.hcard.loss { background: rgba(224, 82, 82, .12); outline: 1px solid rgba(224, 82, 82, .35); }
+.loss .big, .neg { color: var(--bad); }
+.pos { color: var(--good); }
+.lossbar { font: 700 16px var(--f-body); color: var(--bad); text-align: center; padding: 8px; background: rgba(224, 82, 82, .12); border-radius: 8px; }
+/* product lists: name + price, details on tap */
+.it .nm small .x2 { display: none; }
+.it.open .nm small .x2 { display: inline; }
+.it .nm { cursor: pointer; }
+.srow { display: grid; grid-template-columns: minmax(0, 1fr) 84px 84px; gap: 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.srow.h { font: 600 10.5px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 4px 0; }
+.srow > span:not(:first-child) { text-align: right; }
+.srow .nm { font-size: 14.5px; line-height: 1.25; }
+.srow .nm small, .srow small { display: block; color: var(--muted); font-size: 12.5px; font-weight: 400; }
+.srow b { font-size: 16px; }
 </style>
 </head>
 <body>
@@ -212,12 +253,19 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
 
   <nav class="tabs" id="tabs" role="tablist" aria-label="Sections">
     <button type="button" role="tab" data-tab="calc">Calculator</button>
-    <button type="button" role="tab" data-tab="sales">Sales</button>
     <button type="button" role="tab" data-tab="pricing">Pricing</button>
-    <button type="button" role="tab" data-tab="bundles">Bundles</button>
-    <button type="button" role="tab" data-tab="hours">Print time</button>
-    <button type="button" role="tab" data-tab="costs">Costs</button>
+    <button type="button" role="tab" data-tab="sales">Sales</button>
+    <button type="button" role="tab" data-tab="more">More</button>
   </nav>
+
+  <!-- MORE (menu) -->
+  <div class="panel" data-panel="more" hidden>
+    <div class="menu">
+      <button type="button" class="mi" data-go="costs"><b>Costs</b><span>Product costs, packaging, label, fees</span></button>
+      <button type="button" class="mi" data-go="bundles"><b>Bundles</b><span>Build a kit and see what it earns</span></button>
+      <button type="button" class="mi" data-go="hours"><b>Print time</b><span>Which product earns the most per printer hour</span></button>
+    </div>
+  </div>
 
   <div class="panel" data-panel="calc">
   <!-- RESULTS -->
@@ -226,6 +274,7 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
       <div class="col web"><span class="who">Website</span><span class="profit num" id="w-profit">$0.00</span><span class="margin" id="w-margin">–</span></div>
       <div class="col"><span class="who">Etsy</span><span class="profit num" id="e-profit">$0.00</span><span class="margin" id="e-margin">–</span></div>
     </div>
+    <div class="lossbar" id="discLoss" hidden></div>
     <div class="diff" id="diff">Add items below to see your profit.</div>
     <details class="break"><summary>Show the full breakdown</summary>
       <table class="bd"><thead><tr><th></th><th>Website</th><th>Etsy</th></tr></thead><tbody id="bd"></tbody></table>
@@ -242,7 +291,6 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
     </div>
     <label class="f">Discount or promo code (website)<small>Dollars off this order, if any</small><div class="money"><input id="disc" inputmode="decimal" placeholder="0.00"></div></label>
     <label class="chk"><input type="checkbox" id="offsite"> This Etsy sale came from an Offsite Ad</label>
-    <p class="hint">Your costs (filament, packaging, label, fees) are on the <b>Costs</b> tab.</p>
     <div class="actions"><button class="ghost" id="clear" type="button">Clear order</button><button class="ghost" id="autoShip" type="button">Reset shipping to automatic</button></div>
   </section>
 
@@ -303,9 +351,16 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
 
   <!-- PRICING -->
   <div class="panel" data-panel="pricing" hidden>
-    <section class="card">
-      <h2>Try a price</h2>
-      <p class="hint">Type a price you're thinking about and see it next to what you charge now. Nothing changes on the website unless you tap the button at the bottom.</p>
+    <div class="menu" id="pr-menu">
+      <button type="button" class="mi" data-tool="sale"><b>Sale &amp; discount</b><span>What a sale or promo code costs you</span></button>
+      <button type="button" class="mi" data-tool="try"><b>Try a price</b><span>A new price next to what you charge now</span></button>
+      <button type="button" class="mi" data-tool="suggest"><b>Price suggester</b><span>Prices that hit the margin you want</span></button>
+      <button type="button" class="mi" data-tool="whatif"><b>Raise all prices</b><span>How many sales you could lose and break even</span></button>
+    </div>
+
+    <section class="card" data-tool="try" hidden>
+      <div class="toolhead"><button type="button" class="back" data-tool="">← Pricing</button><h2>Try a price</h2></div>
+      <p class="hint">Type a price you're thinking about. Nothing changes on the website unless you tap "Use these test prices".</p>
       <label class="f">Product<select id="tp-prod" class="plain"></select></label>
       <label class="f">Test price
         <div class="tpstep">
@@ -328,53 +383,64 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
       </div>
       <p class="msg" id="tp-msg" hidden></p>
     </section>
-    <section class="card">
-      <h2>Sale &amp; discount calculator</h2>
-      <p class="hint">See what you'd make on a sale or promo code. Change the discount and everything updates.</p>
+
+    <section class="card" data-tool="sale" hidden>
+      <div class="toolhead"><button type="button" class="back" data-tool="">← Pricing</button><h2>Sale &amp; discount</h2></div>
+      <p class="hint">Pick a product and a discount. The red number is the profit you give up on each piece. Fees are worked out on the sale price, the way Stripe and Etsy charge them.</p>
       <label class="f">Product<select id="sd-prod" class="plain"></select></label>
-      <div class="row2" style="align-items:end">
-        <label class="f">Regular price<div class="money"><input id="sd-price" inputmode="decimal"></div></label>
-        <label class="f">Cost to make<small id="sd-costnote">From your Costs tab</small><div class="money"><input id="sd-cost" inputmode="decimal"></div></label>
-      </div>
-      <div class="f" style="font-size:13.5px;font-weight:600">Discount</div>
       <div class="periods" id="sd-chips" role="group" aria-label="Quick discounts">
         <button type="button" data-v="0">None</button><button type="button" data-v="10">10%</button><button type="button" data-v="15">15%</button><button type="button" data-v="20">20%</button><button type="button" data-v="25">25%</button><button type="button" data-v="30">30%</button><button type="button" data-v="40">40%</button><button type="button" data-v="50">50%</button>
       </div>
-      <div class="row2">
-        <label class="f">Type<select id="sd-mode" class="plain"><option value="pct">% off</option><option value="usd">$ off</option></select></label>
-        <label class="f">Amount<div class="sdamt pct" id="sd-amtwrap"><input id="sd-amt" inputmode="decimal"></div></label>
-      </div>
       <input type="range" id="sd-slider" class="sdslider" min="0" max="70" step="1" aria-label="Discount percent">
       <div id="sd-cmp"></div>
-      <details class="break"><summary>Every product at this discount</summary><div class="ptable" id="sd-all"></div></details>
+      <details class="break" id="sd-adv"><summary>Exact amount, $ off, price or cost</summary>
+        <div class="inner2">
+          <div class="row2">
+            <label class="f">Type<select id="sd-mode" class="plain"><option value="pct">% off</option><option value="usd">$ off</option></select></label>
+            <label class="f">Amount<div class="sdamt pct" id="sd-amtwrap"><input id="sd-amt" inputmode="decimal"></div></label>
+          </div>
+          <div class="row2">
+            <label class="f">Regular price<div class="money"><input id="sd-price" inputmode="decimal"></div></label>
+            <label class="f">Cost to make<div class="money"><input id="sd-cost" inputmode="decimal"></div></label>
+          </div>
+          <p class="hint" id="sd-costnote"></p>
+        </div>
+      </details>
+      <details class="break" id="sd-more"><summary>Full comparison</summary><div id="sd-detail"></div></details>
+      <details class="break"><summary>Every product at this discount</summary><div id="sd-all"></div></details>
     </section>
-    <section class="card">
-      <h2>Price suggester</h2>
-      <p class="hint">Pick the profit margin you want. Each product gets a suggested price for the website and for Etsy (Etsy's fees are higher). Uses your costs and a typical order.</p>
+
+    <section class="card" data-tool="suggest" hidden>
+      <div class="toolhead"><button type="button" class="back" data-tool="">← Pricing</button><h2>Price suggester</h2></div>
+      <p class="hint">Pick the margin you want. Each product gets a suggested price for the website and for Etsy (Etsy's fees are higher). Yellow = higher than now. Green = you could charge less. A dash means that margin isn't reachable.</p>
       <div class="row2">
-        <label class="f">Target margin, website<div class="pct"><input id="pr-tw" inputmode="decimal"></div></label>
-        <label class="f">Target margin, Etsy<div class="pct"><input id="pr-te" inputmode="decimal"></div></label>
-      </div>
-      <div class="row2">
-        <label class="f">Items in a typical order<small>Spreads packaging and the label across items</small><input id="pr-ipo" class="plain" inputmode="decimal"></label>
-        <label class="f">Round prices up to<select id="pr-round" class="plain"><option value="0.25">nearest $0.25</option><option value="0.5">nearest $0.50</option><option value="1">whole dollar</option><option value="0.01">exact cents</option></select></label>
+        <label class="f">Website margin<div class="pct"><input id="pr-tw" inputmode="decimal"></div></label>
+        <label class="f">Etsy margin<div class="pct"><input id="pr-te" inputmode="decimal"></div></label>
       </div>
       <div class="ptable" id="ptable"></div>
-      <label class="chk"><input type="checkbox" id="pr-raise" checked> Only raise prices (keep any price that's already above the suggestion)</label>
+      <details class="break"><summary>Settings</summary>
+        <div class="inner2">
+          <div class="row2">
+            <label class="f">Items per order<small>Spreads packaging and label</small><input id="pr-ipo" class="plain" inputmode="decimal"></label>
+            <label class="f">Round up to<small>&nbsp;</small><select id="pr-round" class="plain"><option value="0.25">nearest $0.25</option><option value="0.5">nearest $0.50</option><option value="1">whole dollar</option><option value="0.01">exact cents</option></select></label>
+          </div>
+          <label class="chk"><input type="checkbox" id="pr-raise" checked> Only raise prices</label>
+        </div>
+      </details>
       <button class="btn wide" id="applyWeb" type="button">Use these prices on the website</button>
       <div class="confirm" id="applyConfirm" hidden>
         <p id="applyText"></p>
         <div class="actions"><button class="btn" id="applyYes" type="button">Yes, update the website</button><button class="ghost" id="applyNo" type="button">Cancel</button></div>
       </div>
       <p class="msg" id="applyMsg" hidden></p>
-      <p class="hint">Etsy prices have to be changed in Etsy yourself.</p>
     </section>
-    <section class="card">
-      <h2>What if I raise my prices?</h2>
+
+    <section class="card" data-tool="whatif" hidden>
+      <div class="toolhead"><button type="button" class="back" data-tool="">← Pricing</button><h2>Raise all prices</h2></div>
       <p class="hint">Higher prices can lose some sales. This shows how many you could lose and still make the same profit.</p>
       <div class="row2">
         <label class="f">Raise every price by<div class="money"><input id="wi-amt" inputmode="decimal" value="1.00"></div></label>
-        <label class="f">Sales mix<select id="wi-mix" class="plain"><option value="sales">Based on what actually sells</option><option value="even">Every product equally</option></select></label>
+        <label class="f">Sales mix<select id="wi-mix" class="plain"><option value="sales">What actually sells</option><option value="even">Every product equally</option></select></label>
       </div>
       <div id="whatif"></div>
     </section>
@@ -383,6 +449,7 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
   <!-- (pricing what-if lives inside the pricing panel) -->
   <!-- BUNDLES -->
   <div class="panel" data-panel="bundles" hidden>
+    <button type="button" class="back" data-go="more">← More</button>
     <section class="card">
       <h2>Bundle builder</h2>
       <p class="hint">Put a kit together, set a bundle price, and see what you'd make on the website and on Etsy.</p>
@@ -405,6 +472,7 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
 
   <!-- PRINT TIME -->
   <div class="panel" data-panel="hours" hidden>
+    <button type="button" class="back" data-go="more">← More</button>
     <section class="card">
       <h2>Best use of printer time</h2>
       <p class="hint">Profit earned per hour of printer time, from best to worst. Website sales, typical order. Type print times below.</p>
@@ -421,6 +489,7 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
 
   <!-- COSTS -->
   <div class="panel" data-panel="costs" hidden>
+    <button type="button" class="back" data-go="more">← More</button>
   <section class="card">
     <h2>Filament calculator</h2>
     <p class="hint">Enter your spool price and how many grams each part uses (your slicer shows this). Extras are things like magnets, rubber feet, and mounting strips.</p>
@@ -494,6 +563,7 @@ let catalog = [
 ];
 let shipCfg = { flatCents: 500, freeEnabled: true, freeOverCents: 2500 };
 let qty = {}, shipManual = false;
+const openItems = new Set();   // products whose cost/markup line is shown
 
 const store = { get(k, d) { try { const v = localStorage.getItem("cma-profit-" + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
                 set(k, v) { try { localStorage.setItem("cma-profit-" + k, JSON.stringify(v)); } catch (e) {} } };
@@ -512,7 +582,7 @@ function renderItems() {
   $("items").innerHTML = catalog.map(p => {
     const q = qty[p.id] || 0;
     const c = costOf(p.id), pm = p.price > 0 ? Math.round((p.price - c) / p.price * 100) : 0;
-    return `<div class="it${q ? " has" : ""}" data-id="${p.id}"><div class="nm">${p.name}<small>${money(p.price)} each · costs ${money(c)} · ${pm}% before fees & shipping</small></div>
+    return `<div class="it${q ? " has" : ""}${openItems.has(p.id) ? " open" : ""}" data-id="${p.id}"><div class="nm">${p.name}<small>${money(p.price)}<span class="x2"> · costs ${money(c)} · ${pm}% before fees & shipping</span></small></div>
       <div class="step"><button type="button" data-d="-1" aria-label="One fewer ${p.name}">−</button><span>${q}</span><button type="button" data-d="1" aria-label="One more ${p.name}">+</button></div></div>`;
   }).join("");
 }
@@ -542,6 +612,14 @@ function calc() {
   const wGross = items - disc + wShip;
   const wFees = wGross > 0 ? wGross * costs.sPct / 100 + costs.sFix : 0;
   const wProfit = wGross - wFees - making - pack - label;
+  // what the discount alone costs you
+  const wGross0 = items + wShip, wFees0 = wGross0 > 0 ? wGross0 * costs.sPct / 100 + costs.sFix : 0;
+  const wProfit0 = wGross0 - wFees0 - making - pack - label;
+  if (disc > 0 && n) {
+    const pts = (wGross0 > 0 ? wProfit0 / wGross0 * 100 : 0) - (wGross > 0 ? wProfit / wGross * 100 : 0);
+    $("discLoss").innerHTML = `Discount: −${money(Math.abs(wProfit0 - wProfit))} profit · −${pts.toFixed(1)} margin pts`;
+    $("discLoss").hidden = false;
+  } else $("discLoss").hidden = true;
   // etsy
   const eShip = num($("e-ship").value), eGross = items + eShip;
   const eTx = eGross * costs.eTx / 100, eList = costs.eList * n, ePp = eGross > 0 ? eGross * costs.ePp / 100 + costs.ePf : 0;
@@ -558,7 +636,7 @@ function calc() {
   };
   show("w-profit", "w-margin", wProfit, wGross);
   show("e-profit", "e-margin", eProfit, eGross);
-  $("diff").innerHTML = n ? `${n} item${n === 1 ? "" : "s"}, ${money(items)} of product. The website earns <b>${money(wProfit - eProfit)}</b> ${wProfit >= eProfit ? "more" : "less"} than Etsy on this order.` : "Add items below to see your profit.";
+  $("diff").innerHTML = n ? `${n} item${n === 1 ? "" : "s"} · ${money(items)} · website earns <b>${money(Math.abs(wProfit - eProfit))}</b> ${wProfit >= eProfit ? "more" : "less"} than Etsy` : "Add items below to see your profit.";
 
   const r = (label, w, e, cls) => `<tr${cls ? ` class="${cls}"` : ""}><td>${label}</td><td>${w}</td><td>${e}</td></tr>`;
   $("bd").innerHTML =
@@ -589,6 +667,8 @@ function calc() {
 }
 
 $("items").addEventListener("click", e => {
+  const nm = e.target.closest(".nm");
+  if (nm) { const it = nm.closest(".it"), id = it.dataset.id; openItems.has(id) ? openItems.delete(id) : openItems.add(id); it.classList.toggle("open"); return; }
   const b = e.target.closest("[data-d]"); if (!b) return;
   const id = b.closest(".it").dataset.id;
   qty[id] = Math.max(0, Math.min(99, (qty[id] || 0) + Number(b.dataset.d)));
@@ -635,11 +715,21 @@ const esc = t => String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g,
 const pct = n => (Number.isFinite(n) ? n.toFixed(1) : "–") + "%";
 
 /* ---------- tabs ---------- */
-const TABS = ["calc", "sales", "pricing", "bundles", "hours", "costs"];
-function showTab(t) {
+const TABS = ["calc", "sales", "pricing", "more", "bundles", "hours", "costs"];
+const UNDER_MORE = ["bundles", "hours", "costs"];
+function showTool(name) {
+  // Pricing tab: show the menu, or exactly one tool
+  $("pr-menu").hidden = !!name;
+  document.querySelectorAll('[data-panel="pricing"] section[data-tool]').forEach(s => { s.hidden = s.dataset.tool !== name; });
+  store.set("prtool", name || "");
+  window.scrollTo(0, 0);
+}
+function showTab(t, keepTool) {
   if (!TABS.includes(t)) t = "calc";
   document.querySelectorAll("[data-panel]").forEach(el => { el.hidden = el.dataset.panel !== t; });
-  document.querySelectorAll("#tabs [data-tab]").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === t));
+  const lit = UNDER_MORE.includes(t) ? "more" : t;
+  document.querySelectorAll("#tabs [data-tab]").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === lit));
+  if (t === "pricing" && !keepTool) showTool("");
   store.set("tab", t);
   if (t === "sales") openSales();
   if (t === "pricing") renderPricing();
@@ -649,6 +739,10 @@ function showTab(t) {
   window.scrollTo(0, 0);
 }
 $("tabs").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if (b) showTab(b.dataset.tab); });
+document.addEventListener("click", e => {
+  const go = e.target.closest("[data-go]"); if (go) { showTab(go.dataset.go); return; }
+  const tool = e.target.closest("button[data-tool]"); if (tool) showTool(tool.dataset.tool);
+});
 
 /* ---------- shared per-item economics ---------- */
 const P = { tw: 50, te: 50, ipo: 2, round: "0.25", ...store.get("pricing", {}) };
@@ -697,11 +791,10 @@ function renderPricing() {
     if (w) suggestedWeb[p.id] = w;
     const curM = p.price > 0 ? unitProfit(p, "website") / p.price * 100 : 0;
     const cls = w == null ? "" : w > p.price + 0.001 ? "up" : w < p.price - 0.001 ? "down" : "";
-    return `<div class="prow"><span class="nm">${esc(p.name)}<small>now ${money(p.price)} · ${pct(curM)} margin · cost ${money(costOf(p.id))}</small></span>
+    return `<div class="prow"><span class="nm">${esc(p.name)}</span>
       <span>${money(p.price)}</span><span class="${cls}">${w == null ? "–" : money(w)}</span><span>${e == null ? "–" : money(e)}</span></div>`;
   }).join("");
-  $("ptable").innerHTML = `<div class="prow h"><span>Product</span><span>Now</span><span>Website</span><span>Etsy</span></div>` + rows +
-    `<p class="hint">Yellow = suggested price is higher than now. Green = you could charge less and still hit your target. A dash means the target margin isn't reachable after fees.</p>`;
+  $("ptable").innerHTML = `<div class="prow h"><span>Product</span><span>Now</span><span>Website</span><span>Etsy</span></div>` + rows;
 }
 function pricesToApply() {
   const raiseOnly = $("pr-raise").checked, out = {};
@@ -971,7 +1064,7 @@ function bundleNumbers(items, price) {
 }
 function renderBundles() {
   $("bn-items").innerHTML = catalog.map(p => { const q = bnQty[p.id] || 0;
-    return `<div class="it${q ? " has" : ""}" data-id="${p.id}"><div class="nm">${esc(p.name)}<small>${money(p.price)} · costs ${money(costOf(p.id))}</small></div>
+    return `<div class="it${q ? " has" : ""}" data-id="${p.id}"><div class="nm">${esc(p.name)}<small>${money(p.price)}</small></div>
       <div class="step"><button type="button" data-d="-1" aria-label="One fewer">−</button><span>${q}</span><button type="button" data-d="1" aria-label="One more">+</button></div></div>`; }).join("");
   renderBundleResult(); renderSavedBundles();
 }
@@ -982,13 +1075,15 @@ function renderBundleResult() {
   if ($("bn-mode").value === "price" && !$("bn-price").value) $("bn-price").placeholder = regular.toFixed(2);
   const n = bundleNumbers(items, bnPrice(regular));
   const m = (x, g) => `<span class="r ${x.profit >= 0 ? "" : "bad"}">${money(x.profit)} <small class="${x.profit / g >= .35 ? "good" : x.profit / g >= .15 ? "warn" : "bad"}">${pct(g ? x.profit / g * 100 : 0)}</small></span>`;
-  $("bn-result").innerHTML = `<div class="answer">Regular price <b>${money(n.regular)}</b> → bundle price <b>${money(n.price)}</b> (buyer saves ${money(n.disc)}).` +
+  const bLoss = n.webFull.profit - n.web.profit;
+  $("bn-result").innerHTML = (bLoss > 0.004 ? `<div class="lossbar">Bundle discount: −${money(bLoss)} profit on the website</div>` : "") +
+    `<div class="answer">Regular price <b>${money(n.regular)}</b> → bundle price <b>${money(n.price)}</b> (buyer saves ${money(n.disc)}).` +
     ` Website shipping: ${n.webShip ? money(n.webShip) : "free"}.</div>
     <div class="cmp"><span class="h">YOU MAKE</span><span class="h r">PROFIT</span><span class="h r">REVENUE</span>
       <span>Website, bundle price</span>${m(n.web, n.web.gross)}<span class="r">${money(n.web.gross)}</span>
       <span>Website, full price</span>${m(n.webFull, n.webFull.gross)}<span class="r">${money(n.webFull.gross)}</span>
       <span>Etsy, bundle price</span>${m(n.etsy, n.etsy.gross)}<span class="r">${money(n.etsy.gross)}</span></div>
-    <p class="hint">The discount costs you ${money(n.webFull.profit - n.web.profit)} per bundle on the website. It's worth it if the bundle sells more pieces than people would buy one at a time.</p>`;
+    <p class="hint">Worth it if the bundle sells more pieces than people would buy one at a time.</p>`;
 }
 function renderSavedBundles() {
   $("bn-saved").innerHTML = bundles.length ? bundles.map((b, i) => {
@@ -1180,10 +1275,21 @@ function renderTryCompare() {
     } else if (x.tP <= 0) tail = " You'd lose money on each one.";
     return `<div><b>${lbl}:</b> ${d > 0 ? "+" : "−"}${money(Math.abs(d)).replace("−", "")} per piece (${(x.tM - x.nowM >= 0 ? "+" : "")}${(x.tM - x.nowM).toFixed(1)} margin points).${tail}</div>`;
   };
+  const card = (lbl, x) => {
+    const d = x.tP - x.nowP, sign = d >= 0 ? "+" : "−";
+    return `<div class="hcard"><span class="who">${lbl}</span>
+      <span class="big ${x.tP < 0 ? "neg" : ""}">${money(x.tP)}</span><span class="sm">per piece · now ${money(x.nowP)}</span>
+      <span class="mid ${d >= 0 ? "pos" : "neg"}">${sign}${money(Math.abs(d))}</span>
+      <span class="sm">margin ${pct(x.nowM)} → <b>${pct(x.tM)}</b></span></div>`;
+  };
+  const wasOpen = !!($("tp-cmp").querySelector("details") || {}).open;
   $("tp-cmp").innerHTML =
+    `<div class="hero">${card("Website", w)}${card("Etsy", e)}</div>` +
+    `<details class="break"><summary>Side by side, with details</summary>` +
     `<div class="tpg"><span class="h"></span><span class="h">Now</span><span class="h t">Test</span>${sec("Website", w)}${sec("Etsy", e)}</div>` +
-    `<div class="tpdelta">${delta("Website", w)}${delta("Etsy", e)}</div>` +
-    `<p class="hint">Per piece, in a typical ${P.ipo}-item order (change that under Price suggester below). Uses your costs, fees, packaging and label.</p>`;
+    `<div class="tpdelta" style="margin-top:10px">${delta("Website", w)}${delta("Etsy", e)}</div>` +
+    `<p class="hint" style="margin-top:8px">Per piece, in a typical ${P.ipo}-item order. Uses your costs, fees, packaging and label.</p></details>`;
+  if (wasOpen) $("tp-cmp").querySelector("details").open = true;
 }
 
 function renderTryList() {
@@ -1192,7 +1298,7 @@ function renderTryList() {
   $("tp-list").innerHTML = ids.map(id => {
     const p = catalog.find(c => c.id === id), t = tests[id], w = tpNumbers(p, t, "website"), e = tpNumbers(p, t, "etsy");
     return `<div class="tli" data-id="${id}"><button type="button" class="go">${esc(p.name)}: ${money(p.price)} → <b>${money(t)}</b>
-      <small>Website ${money(w.nowP)} → ${money(w.tP)} (${pct(w.nowM)} → ${pct(w.tM)}) · Etsy ${money(e.nowP)} → ${money(e.tP)} (${pct(e.nowM)} → ${pct(e.tM)})</small></button>
+      <small>Profit: website ${money(w.nowP)} → ${money(w.tP)} · Etsy ${money(e.nowP)} → ${money(e.tP)}</small></button>
       <button type="button" class="x" aria-label="Remove test price for ${esc(p.name)}">×</button></div>`;
   }).join("");
 }
@@ -1291,8 +1397,9 @@ function renderSale() {
     $("sd-price").value = custom ? sdCustom.price : p.price.toFixed(2);
     $("sd-cost").value = custom ? sdCustom.cost : costOf(p.id).toFixed(2);
     sdShown = SD.prod;
+    if (custom) $("sd-adv").open = true;
   }
-  $("sd-costnote").textContent = custom ? "What one costs you to make" : "From your Costs tab (changes here aren't saved)";
+  $("sd-costnote").textContent = custom ? "Type your price and what one costs you to make." : "Price and cost come from your Costs tab. Changes here are just for this calculator.";
   // discount controls
   $("sd-mode").value = SD.mode;
   $("sd-amtwrap").className = "sdamt " + (SD.mode === "usd" ? "money" : "pct");
@@ -1323,18 +1430,40 @@ function renderSaleResult() {
     const more = x.rp > 0 ? ` To make the same money as full price, you'd need <b>${((x.rp / x.sp - 1) * 100).toFixed(0)}% more sales</b>.` : "";
     return `<div><b>${lbl}:</b> the sale costs you ${money(x.rp - x.sp)} per piece.${more} ${be}</div>`;
   };
-  $("sd-cmp").innerHTML =
-    `<div class="tpg"><span class="h"></span><span class="h">Regular</span><span class="h t">${off > 0 ? Math.round(off) + "% off" : "Sale"}</span>${sec("Website", w)}${sec("Etsy", e)}</div>` +
-    (off > 0 ? `<div class="tpdelta">${line("Website", w)}${line("Etsy", e)}</div>` : `<p class="empty">Pick a discount to compare.</p>`) +
-    `<p class="hint">Per piece, in a typical ${P.ipo}-item order. Fees are worked out on the sale price, the same way Stripe and Etsy charge them.</p>`;
+  const label = off > 0 ? (SD.mode === "usd" ? money(SD.amt) + " off" : Math.round(off) + "% off") : "";
+  const card = (lbl, x) => {
+    if (!(off > 0)) return `<div class="hcard"><span class="who">${lbl}</span><span class="lbl">Profit per piece</span>
+      <span class="big ${x.rp < 0 ? "neg" : ""}">${money(x.rp)}</span><span class="sm">margin <b>${pct(x.rm)}</b></span></div>`;
+    const lost = x.rp - x.sp, pts = x.rm - (sale > 0 ? x.sm : 0);
+    return `<div class="hcard loss"><span class="who">${lbl} · ${label}</span><span class="lbl">Profit lost per piece</span>
+      <span class="big">−${money(Math.abs(lost))}</span>
+      <span class="sm">${money(x.rp)} → <b class="${x.sp <= 0 ? "neg" : ""}">${money(x.sp)}</b></span>
+      <span class="mid neg">−${Math.abs(pts).toFixed(1)} pts</span>
+      <span class="sm">margin ${pct(x.rm)} → <b>${sale > 0 ? pct(x.sm) : "–"}</b></span>
+      ${x.sp <= 0 ? `<span class="sm neg"><b class="neg">Loses money on each one</b></span>` : ""}</div>`;
+  };
+  $("sd-cmp").innerHTML = `<div class="hero">${card("Website", w)}${card("Etsy", e)}</div>` +
+    (off > 0 ? "" : `<p class="empty">Tap a discount above to see what it costs you.</p>`);
+
+  const keepOpen = $("sd-more").open;
+  $("sd-detail").innerHTML =
+    `<div class="tpg"><span class="h"></span><span class="h">Regular</span><span class="h t">${label || "Sale"}</span>${sec("Website", w)}${sec("Etsy", e)}</div>` +
+    (off > 0 ? `<div class="tpdelta" style="margin-top:10px">${line("Website", w)}${line("Etsy", e)}</div>` : "") +
+    `<p class="hint" style="margin-top:8px">Per piece, in a typical ${P.ipo}-item order.</p>`;
+  $("sd-more").open = keepOpen;
 
   // whole catalog at this discount
-  $("sd-all").innerHTML = `<div class="prow h"><span>Product</span><span>Sale</span><span>Website</span><span>Etsy</span></div>` +
+  $("sd-all").innerHTML = `<div class="srow h"><span>Product</span><span>Website</span><span>Etsy</span></div>` +
     catalog.map(p => {
-      const s = salePrice(p.price), c = costOf(p.id), wp = pieceProfit(s, c, "website"), ep = pieceProfit(s, c, "etsy");
-      const cell = (v) => `<span class="${v <= 0 ? "bad" : s > 0 ? mCls(v / s * 100) : ""}">${money(v)}</span>`;
-      return `<div class="prow"><span class="nm">${esc(p.name)}<small>${money(p.price)} → ${money(s)}</small></span><span>${money(s)}</span>${cell(wp)}${cell(ep)}</div>`;
-    }).join("") + `<p class="hint">Profit per piece at ${SD.mode === "usd" ? money(SD.amt) : SD.amt + "%"} off. Green = 35%+ margin, yellow = 15–35%, red = under 15% or a loss.</p>`;
+      const s = salePrice(p.price), c = costOf(p.id);
+      const cell = chn => {
+        const full = pieceProfit(p.price, c, chn), now = pieceProfit(s, c, chn);
+        return off > 0 || SD.mode === "usd" && SD.amt > 0
+          ? `<span><b class="neg">−${money(Math.abs(full - now))}</b><small class="${now <= 0 ? "neg" : ""}">${money(now)} left</small></span>`
+          : `<span><b>${money(full)}</b><small>profit</small></span>`;
+      };
+      return `<div class="srow"><span class="nm">${esc(p.name)}<small>${money(p.price)} → ${money(s)}</small></span>${cell("website")}${cell("etsy")}</div>`;
+    }).join("") + `<p class="hint" style="margin-top:8px">Red = profit you give up per piece. "Left" is what you still make.</p>`;
 }
 
 $("sd-prod").addEventListener("change", () => {
@@ -1358,6 +1487,21 @@ $("sd-mode").addEventListener("change", () => {
 
 window.renderSale = renderSale;
 if (store.get("tab", "calc") === "pricing") renderSale();
+</script>
+
+<script>
+/* ===================== Explanations behind an ⓘ button ===================== */
+document.querySelectorAll("h2 + p.hint, .toolhead + p.hint").forEach(p => {
+  const h = p.previousElementSibling.matches(".toolhead") ? p.previousElementSibling.querySelector("h2") : p.previousElementSibling;
+  if (!h) return;
+  p.hidden = true; p.classList.add("tip");
+  h.classList.add("hasinfo");
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "info"; b.textContent = "i";
+  b.setAttribute("aria-label", "What is this?"); b.setAttribute("aria-expanded", "false");
+  b.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); p.hidden = !p.hidden; b.setAttribute("aria-expanded", String(!p.hidden)); });
+  h.appendChild(b);
+});
 </script>
 </body>
 </html>
