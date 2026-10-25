@@ -176,6 +176,26 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
 .bsave:last-child { border-bottom: 0; }
 .bsave b { font-size: 15px; }
 .bsave span { font-size: 13px; color: var(--muted); }
+/* Try a price */
+.tpstep { display: flex; gap: 8px; align-items: center; }
+.tpstep .money { flex: 1; }
+.tpstep button { flex: none; width: 46px; height: 44px; border: 1px solid var(--line); background: var(--raise); color: var(--ink); border-radius: 6px; font: 600 20px/1 var(--f-body); cursor: pointer; touch-action: manipulation; }
+.tpstep button:active { background: var(--red-deep); }
+.tpg { display: grid; grid-template-columns: minmax(0, 1fr) 86px 86px; column-gap: 8px; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+.tpg > span { padding: 7px 0; border-bottom: 1px solid var(--line); text-align: right; }
+.tpg > span.l { text-align: left; color: var(--muted); }
+.tpg > span.h { font: 600 11px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-bottom: 0; padding-bottom: 2px; }
+.tpg > span.h.t { color: var(--red); }
+.tpg > span.sec { grid-column: 1 / -1; text-align: left; font: 600 12px var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink); padding-top: 14px; }
+.tpg > span.tc { background: var(--raise); padding-right: 6px; }
+.tpg > span.big { font-weight: 700; font-size: 16px; }
+.tpdelta { font-size: 14px; background: var(--raise); border-radius: 8px; padding: 10px 12px; display: grid; gap: 4px; }
+.tpdelta b { color: var(--ink); }
+.tli { display: grid; grid-template-columns: minmax(0, 1fr) 30px; gap: 8px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.tli:last-child { border-bottom: 0; }
+.tli button.go { background: none; border: 0; color: var(--ink); text-align: left; padding: 0; font: 500 14px/1.3 var(--f-body); cursor: pointer; }
+.tli button.go small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.tli .x { background: none; border: 0; color: var(--muted); font-size: 22px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -279,6 +299,31 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
 
   <!-- PRICING -->
   <div class="panel" data-panel="pricing" hidden>
+    <section class="card">
+      <h2>Try a price</h2>
+      <p class="hint">Type a price you're thinking about and see it next to what you charge now. Nothing changes on the website unless you tap the button at the bottom.</p>
+      <label class="f">Product<select id="tp-prod" class="plain"></select></label>
+      <label class="f">Test price
+        <div class="tpstep">
+          <button type="button" id="tp-minus" aria-label="25 cents less">−</button>
+          <div class="money"><input id="tp-price" inputmode="decimal" aria-label="Test price"></div>
+          <button type="button" id="tp-plus" aria-label="25 cents more">+</button>
+        </div>
+      </label>
+      <div id="tp-cmp"></div>
+      <div id="tp-listwrap" hidden>
+        <h2>Your test prices</h2>
+        <p class="hint">Saved on this phone. Tap one to look at it again.</p>
+        <div id="tp-list"></div>
+        <button class="btn wide" id="tp-apply" type="button">Use these test prices on the website</button>
+        <div class="confirm" id="tp-confirm" hidden>
+          <p id="tp-ctext"></p>
+          <div class="actions"><button class="btn" id="tp-yes" type="button">Yes, update the website</button><button class="ghost" id="tp-no" type="button">Cancel</button></div>
+        </div>
+        <button class="ghost" id="tp-clear" type="button">Clear all test prices</button>
+      </div>
+      <p class="msg" id="tp-msg" hidden></p>
+    </section>
     <section class="card">
       <h2>Price suggester</h2>
       <p class="hint">Pick the profit margin you want. Each product gets a suggested price for the website and for Etsy (Etsy's fees are higher). Uses your costs and a typical order.</p>
@@ -620,6 +665,7 @@ $("pr-tw").value = P.tw; $("pr-te").value = P.te; $("pr-ipo").value = P.ipo; $("
 let suggestedWeb = {};
 function renderPricing() {
   if (window.renderWhatIf) setTimeout(window.renderWhatIf, 0);
+  if (window.renderTry) setTimeout(window.renderTry, 0);
   suggestedWeb = {};
   const rows = catalog.map(p => {
     const w = suggest(p, "website", P.tw), e = suggest(p, "etsy", P.te);
@@ -1058,6 +1104,135 @@ window.onCostsChanged = () => {
   if (t === "sales") renderBreakeven();
 };
 showTab(store.get("tab", "calc"));
+</script>
+
+<script>
+/* ===================== Try a price: hypothetical price vs current, side by side ===================== */
+let tests = store.get("tests", {});   // product id -> test price
+let tpSel = store.get("tpsel", null), tpShown = null;
+const mCls = m => (m >= 35 ? "good" : m >= 15 ? "warn" : "bad");
+const tpProduct = () => catalog.find(p => p.id === tpSel) || catalog[0];
+
+function tpNumbers(p, price, ch) {
+  const nowP = unitProfit(p, ch), tP = unitProfit(p, ch, price);
+  return { nowP, tP, nowM: p.price > 0 ? nowP / p.price * 100 : 0, tM: price > 0 ? tP / price * 100 : 0 };
+}
+
+function renderTry() {
+  if (!catalog.length) return;
+  // product list (rebuilt in case website prices just loaded)
+  const sel = $("tp-prod");
+  if (!catalog.some(p => p.id === tpSel)) tpSel = catalog[0].id;
+  sel.innerHTML = catalog.map(p => `<option value="${p.id}">${esc(p.name)}${tests[p.id] ? " ★" : ""}</option>`).join("");
+  sel.value = tpSel;
+  const p = tpProduct(), inp = $("tp-price");
+  inp.placeholder = p.price.toFixed(2);
+  if (tpShown !== p.id && document.activeElement !== inp) { inp.value = tests[p.id] != null ? tests[p.id].toFixed(2) : ""; tpShown = p.id; }
+  renderTryCompare();
+  renderTryList();
+}
+
+function renderTryCompare() {
+  const p = tpProduct(), raw = $("tp-price").value.trim();
+  const price = raw === "" ? NaN : num(raw);
+  if (!(price > 0)) {
+    $("tp-cmp").innerHTML = `<p class="empty">Now ${money(p.price)} · costs ${money(costOf(p.id))} to make. Type a test price above, or tap + / − to step by 25¢.</p>`;
+    return;
+  }
+  const w = tpNumbers(p, price, "website"), e = tpNumbers(p, price, "etsy");
+  const sec = (title, x) =>
+    `<span class="sec">${title}</span>` +
+    `<span class="l">Price</span><span>${money(p.price)}</span><span class="tc">${money(price)}</span>` +
+    `<span class="l">Profit per piece</span><span class="big ${x.nowP >= 0 ? "" : "bad"}">${money(x.nowP)}</span><span class="tc big ${x.tP >= 0 ? "" : "bad"}">${money(x.tP)}</span>` +
+    `<span class="l">Margin</span><span class="${mCls(x.nowM)}">${pct(x.nowM)}</span><span class="tc ${mCls(x.tM)}">${pct(x.tM)}</span>`;
+  const delta = (lbl, x) => {
+    const d = x.tP - x.nowP;
+    if (Math.abs(d) < 0.005) return `<div><b>${lbl}:</b> same profit as now.</div>`;
+    let tail = "";
+    if (x.nowP > 0 && x.tP > 0) {
+      tail = d > 0 ? ` You could sell <b>${((1 - x.nowP / x.tP) * 100).toFixed(0)}% fewer</b> and still make the same money.`
+                   : ` You'd need <b>${((x.nowP / x.tP - 1) * 100).toFixed(0)}% more sales</b> to make the same money.`;
+    } else if (x.tP <= 0) tail = " You'd lose money on each one.";
+    return `<div><b>${lbl}:</b> ${d > 0 ? "+" : "−"}${money(Math.abs(d)).replace("−", "")} per piece (${(x.tM - x.nowM >= 0 ? "+" : "")}${(x.tM - x.nowM).toFixed(1)} margin points).${tail}</div>`;
+  };
+  $("tp-cmp").innerHTML =
+    `<div class="tpg"><span class="h"></span><span class="h">Now</span><span class="h t">Test</span>${sec("Website", w)}${sec("Etsy", e)}</div>` +
+    `<div class="tpdelta">${delta("Website", w)}${delta("Etsy", e)}</div>` +
+    `<p class="hint">Per piece, in a typical ${P.ipo}-item order (change that under Price suggester below). Uses your costs, fees, packaging and label.</p>`;
+}
+
+function renderTryList() {
+  const ids = catalog.filter(p => tests[p.id] != null).map(p => p.id);
+  $("tp-listwrap").hidden = !ids.length;
+  $("tp-list").innerHTML = ids.map(id => {
+    const p = catalog.find(c => c.id === id), t = tests[id], w = tpNumbers(p, t, "website"), e = tpNumbers(p, t, "etsy");
+    return `<div class="tli" data-id="${id}"><button type="button" class="go">${esc(p.name)}: ${money(p.price)} → <b>${money(t)}</b>
+      <small>Website ${money(w.nowP)} → ${money(w.tP)} (${pct(w.nowM)} → ${pct(w.tM)}) · Etsy ${money(e.nowP)} → ${money(e.tP)} (${pct(e.nowM)} → ${pct(e.tM)})</small></button>
+      <button type="button" class="x" aria-label="Remove test price for ${esc(p.name)}">×</button></div>`;
+  }).join("");
+}
+
+function setTest(v) {
+  const p = tpProduct();
+  if (v > 0 && Math.abs(v - p.price) >= 0.005) tests[p.id] = Math.round(v * 100) / 100; else delete tests[p.id];
+  store.set("tests", tests);
+  // update the ★ in the dropdown without rebuilding it
+  const opt = [...$("tp-prod").options].find(o => o.value === p.id);
+  if (opt) opt.textContent = p.name + (tests[p.id] ? " ★" : "");
+  renderTryCompare(); renderTryList();
+}
+
+$("tp-prod").addEventListener("change", () => { tpSel = $("tp-prod").value; store.set("tpsel", tpSel); tpShown = null; $("tp-msg").hidden = true; renderTry(); });
+$("tp-price").addEventListener("input", () => { const raw = $("tp-price").value.trim(); setTest(raw === "" ? 0 : num(raw)); });
+$("tp-price").addEventListener("blur", () => { const v = num($("tp-price").value); if (v > 0) $("tp-price").value = v.toFixed(2); });
+const tpStep = d => {
+  const p = tpProduct(), cur = $("tp-price").value.trim() === "" ? p.price : num($("tp-price").value);
+  const v = Math.max(0.25, Math.round((cur + d) * 100) / 100);
+  $("tp-price").value = v.toFixed(2); setTest(v);
+};
+$("tp-plus").addEventListener("click", () => tpStep(0.25));
+$("tp-minus").addEventListener("click", () => tpStep(-0.25));
+$("tp-list").addEventListener("click", e => {
+  const row = e.target.closest(".tli"); if (!row) return;
+  if (e.target.closest(".x")) { delete tests[row.dataset.id]; store.set("tests", tests); if (row.dataset.id === tpSel) tpShown = null; renderTry(); return; }
+  tpSel = row.dataset.id; store.set("tpsel", tpSel); tpShown = null; renderTry();
+  $("tp-prod").scrollIntoView({ behavior: "smooth", block: "center" });
+});
+$("tp-clear").addEventListener("click", e => {
+  const b = e.currentTarget;
+  if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Tap again to clear them all"; setTimeout(() => { b.dataset.confirm = ""; b.textContent = "Clear all test prices"; }, 4000); return; }
+  b.dataset.confirm = ""; b.textContent = "Clear all test prices";
+  tests = {}; store.set("tests", tests); tpShown = null; renderTry();
+});
+
+/* send test prices to the website (same route the price suggester uses) */
+const tpPending = () => Object.fromEntries(Object.entries(tests).filter(([id, v]) => { const p = catalog.find(c => c.id === id); return p && Math.abs(v - p.price) >= 0.005; }));
+$("tp-apply").addEventListener("click", () => {
+  const ch = tpPending(), n = Object.keys(ch).length;
+  if (!n) return msg($("tp-msg"), "Your website already uses these prices.", true);
+  $("tp-ctext").textContent = `Change ${n} website price${n === 1 ? "" : "s"}? ` +
+    Object.entries(ch).map(([id, v]) => { const p = catalog.find(c => c.id === id); return `${p.name}: ${money(p.price)} → ${money(v)}`; }).join("; ") +
+    ". Etsy prices don't change; do those in Etsy or the price updater sheet.";
+  $("tp-confirm").hidden = false; $("tp-apply").hidden = true; $("tp-msg").hidden = true;
+});
+$("tp-no").addEventListener("click", () => { $("tp-confirm").hidden = true; $("tp-apply").hidden = false; });
+$("tp-yes").addEventListener("click", async () => {
+  const btn = $("tp-yes"); btn.disabled = true;
+  try {
+    const prices = Object.fromEntries(Object.entries(tpPending()).map(([id, v]) => [id, Math.round(v * 100)]));
+    const r = await cmaAuth.fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prices }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || "Couldn't update prices.");
+    if (Array.isArray(d.catalog)) catalog = d.catalog.map(p => ({ id: p.id, name: p.name, price: p.price / 100 }));
+    Object.keys(prices).forEach(id => delete tests[id]); store.set("tests", tests); tpShown = null;
+    renderItems(); renderCosts(); calc(); renderPricing(); renderTry();
+    msg($("tp-msg"), `Updated ${Object.keys(prices).length} website price${Object.keys(prices).length === 1 ? "" : "s"}. The store shows them right away.`, true);
+  } catch (err) { msg($("tp-msg"), err.message); }
+  finally { btn.disabled = false; $("tp-confirm").hidden = true; $("tp-apply").hidden = false; }
+});
+
+window.renderTry = renderTry;
+if (store.get("tab", "calc") === "pricing") renderTry();
 </script>
 </body>
 </html>
