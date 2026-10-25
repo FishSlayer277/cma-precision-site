@@ -196,6 +196,10 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
 .tli button.go { background: none; border: 0; color: var(--ink); text-align: left; padding: 0; font: 500 14px/1.3 var(--f-body); cursor: pointer; }
 .tli button.go small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
 .tli .x { background: none; border: 0; color: var(--muted); font-size: 22px; cursor: pointer; }
+/* Sale & discount */
+.sdslider { width: 100%; accent-color: var(--red); height: 28px; margin: 0; }
+.sdamt.money::before { content: "$"; padding-left: 10px; color: var(--muted); font-weight: 600; }
+.sdamt.money::after { content: none; }
 </style>
 </head>
 <body>
@@ -323,6 +327,26 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
         <button class="ghost" id="tp-clear" type="button">Clear all test prices</button>
       </div>
       <p class="msg" id="tp-msg" hidden></p>
+    </section>
+    <section class="card">
+      <h2>Sale &amp; discount calculator</h2>
+      <p class="hint">See what you'd make on a sale or promo code. Change the discount and everything updates.</p>
+      <label class="f">Product<select id="sd-prod" class="plain"></select></label>
+      <div class="row2" style="align-items:end">
+        <label class="f">Regular price<div class="money"><input id="sd-price" inputmode="decimal"></div></label>
+        <label class="f">Cost to make<small id="sd-costnote">From your Costs tab</small><div class="money"><input id="sd-cost" inputmode="decimal"></div></label>
+      </div>
+      <div class="f" style="font-size:13.5px;font-weight:600">Discount</div>
+      <div class="periods" id="sd-chips" role="group" aria-label="Quick discounts">
+        <button type="button" data-v="0">None</button><button type="button" data-v="10">10%</button><button type="button" data-v="15">15%</button><button type="button" data-v="20">20%</button><button type="button" data-v="25">25%</button><button type="button" data-v="30">30%</button><button type="button" data-v="40">40%</button><button type="button" data-v="50">50%</button>
+      </div>
+      <div class="row2">
+        <label class="f">Type<select id="sd-mode" class="plain"><option value="pct">% off</option><option value="usd">$ off</option></select></label>
+        <label class="f">Amount<div class="sdamt pct" id="sd-amtwrap"><input id="sd-amt" inputmode="decimal"></div></label>
+      </div>
+      <input type="range" id="sd-slider" class="sdslider" min="0" max="70" step="1" aria-label="Discount percent">
+      <div id="sd-cmp"></div>
+      <details class="break"><summary>Every product at this discount</summary><div class="ptable" id="sd-all"></div></details>
     </section>
     <section class="card">
       <h2>Price suggester</h2>
@@ -666,6 +690,7 @@ let suggestedWeb = {};
 function renderPricing() {
   if (window.renderWhatIf) setTimeout(window.renderWhatIf, 0);
   if (window.renderTry) setTimeout(window.renderTry, 0);
+  if (window.renderSale) setTimeout(window.renderSale, 0);
   suggestedWeb = {};
   const rows = catalog.map(p => {
     const w = suggest(p, "website", P.tw), e = suggest(p, "etsy", P.te);
@@ -1233,6 +1258,106 @@ $("tp-yes").addEventListener("click", async () => {
 
 window.renderTry = renderTry;
 if (store.get("tab", "calc") === "pricing") renderTry();
+</script>
+
+<script>
+/* ===================== Sale & discount calculator ===================== */
+const SD = { prod: null, mode: "pct", amt: 20, ...store.get("sale", {}) };
+let sdShown = null, sdCustom = { price: "", cost: "" };
+const saveSD = () => store.set("sale", { prod: SD.prod, mode: SD.mode, amt: SD.amt });
+
+// profit on one piece at a given price, with a cost you can override (same model as the rest of the app)
+function pieceProfit(price, cost, ch) {
+  const fees = ch === "website" ? price * costs.sPct / 100 : price * (costs.eTx + costs.ePp) / 100 + costs.eList;
+  return price - fees - cost - orderShare(ch);
+}
+const salePrice = reg => Math.max(0, SD.mode === "usd" ? reg - SD.amt : reg * (1 - SD.amt / 100));
+const offPct = reg => (reg > 0 ? (1 - salePrice(reg) / reg) * 100 : 0);
+// deepest % off before each piece loses money
+function breakEvenOff(reg, cost, ch) {
+  const keep = ch === "website" ? 1 - costs.sPct / 100 : 1 - (costs.eTx + costs.ePp) / 100;
+  const need = cost + orderShare(ch) + (ch === "etsy" ? costs.eList : 0);
+  return reg > 0 && keep > 0 ? (1 - need / (reg * keep)) * 100 : -Infinity;
+}
+
+function renderSale() {
+  if (!catalog.length) return;
+  const sel = $("sd-prod");
+  if (SD.prod !== "custom" && !catalog.some(p => p.id === SD.prod)) SD.prod = catalog[0].id;
+  sel.innerHTML = catalog.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("") + `<option value="custom">Custom price (type your own)</option>`;
+  sel.value = SD.prod;
+  const custom = SD.prod === "custom", p = catalog.find(c => c.id === SD.prod);
+  if (sdShown !== SD.prod) {
+    $("sd-price").value = custom ? sdCustom.price : p.price.toFixed(2);
+    $("sd-cost").value = custom ? sdCustom.cost : costOf(p.id).toFixed(2);
+    sdShown = SD.prod;
+  }
+  $("sd-costnote").textContent = custom ? "What one costs you to make" : "From your Costs tab (changes here aren't saved)";
+  // discount controls
+  $("sd-mode").value = SD.mode;
+  $("sd-amtwrap").className = "sdamt " + (SD.mode === "usd" ? "money" : "pct");
+  if (document.activeElement !== $("sd-amt")) $("sd-amt").value = SD.mode === "usd" ? SD.amt.toFixed(2) : String(SD.amt);
+  $("sd-chips").hidden = SD.mode === "usd"; $("sd-slider").hidden = SD.mode === "usd";
+  $("sd-slider").value = Math.min(70, SD.amt);
+  document.querySelectorAll("#sd-chips [data-v]").forEach(b => b.setAttribute("aria-pressed", SD.mode === "pct" && Number(b.dataset.v) === SD.amt));
+  renderSaleResult();
+}
+
+function renderSaleResult() {
+  const reg = num($("sd-price").value), cost = num($("sd-cost").value);
+  if (!(reg > 0)) { $("sd-cmp").innerHTML = `<p class="empty">Type the regular price.</p>`; $("sd-all").innerHTML = ""; return; }
+  const sale = salePrice(reg), off = offPct(reg);
+  const ch = c => {
+    const rp = pieceProfit(reg, cost, c), sp = pieceProfit(sale, cost, c);
+    return { rp, sp, rm: rp / reg * 100, sm: sale > 0 ? sp / sale * 100 : -Infinity, be: breakEvenOff(reg, cost, c) };
+  };
+  const w = ch("website"), e = ch("etsy");
+  const sec = (title, x) =>
+    `<span class="sec">${title}</span>` +
+    `<span class="l">Buyer pays</span><span>${money(reg)}</span><span class="tc">${money(sale)}</span>` +
+    `<span class="l">Profit per piece</span><span class="big ${x.rp >= 0 ? "" : "bad"}">${money(x.rp)}</span><span class="tc big ${x.sp >= 0 ? "" : "bad"}">${money(x.sp)}</span>` +
+    `<span class="l">Margin</span><span class="${mCls(x.rm)}">${pct(x.rm)}</span><span class="tc ${x.sp > 0 ? mCls(x.sm) : "bad"}">${sale > 0 ? pct(x.sm) : "–"}</span>`;
+  const line = (lbl, x) => {
+    const be = x.be > 0 ? `You lose money past <b>${Math.floor(x.be)}% off</b>.` : `This loses money even at full price.`;
+    if (x.sp <= 0) return `<div><b>${lbl}:</b> <span class="bad">you lose ${money(-x.sp)} on each one</span> at this discount. ${be}</div>`;
+    const more = x.rp > 0 ? ` To make the same money as full price, you'd need <b>${((x.rp / x.sp - 1) * 100).toFixed(0)}% more sales</b>.` : "";
+    return `<div><b>${lbl}:</b> the sale costs you ${money(x.rp - x.sp)} per piece.${more} ${be}</div>`;
+  };
+  $("sd-cmp").innerHTML =
+    `<div class="tpg"><span class="h"></span><span class="h">Regular</span><span class="h t">${off > 0 ? Math.round(off) + "% off" : "Sale"}</span>${sec("Website", w)}${sec("Etsy", e)}</div>` +
+    (off > 0 ? `<div class="tpdelta">${line("Website", w)}${line("Etsy", e)}</div>` : `<p class="empty">Pick a discount to compare.</p>`) +
+    `<p class="hint">Per piece, in a typical ${P.ipo}-item order. Fees are worked out on the sale price, the same way Stripe and Etsy charge them.</p>`;
+
+  // whole catalog at this discount
+  $("sd-all").innerHTML = `<div class="prow h"><span>Product</span><span>Sale</span><span>Website</span><span>Etsy</span></div>` +
+    catalog.map(p => {
+      const s = salePrice(p.price), c = costOf(p.id), wp = pieceProfit(s, c, "website"), ep = pieceProfit(s, c, "etsy");
+      const cell = (v) => `<span class="${v <= 0 ? "bad" : s > 0 ? mCls(v / s * 100) : ""}">${money(v)}</span>`;
+      return `<div class="prow"><span class="nm">${esc(p.name)}<small>${money(p.price)} → ${money(s)}</small></span><span>${money(s)}</span>${cell(wp)}${cell(ep)}</div>`;
+    }).join("") + `<p class="hint">Profit per piece at ${SD.mode === "usd" ? money(SD.amt) : SD.amt + "%"} off. Green = 35%+ margin, yellow = 15–35%, red = under 15% or a loss.</p>`;
+}
+
+$("sd-prod").addEventListener("change", () => {
+  if (SD.prod === "custom") sdCustom = { price: $("sd-price").value, cost: $("sd-cost").value };
+  SD.prod = $("sd-prod").value; sdShown = null; saveSD(); renderSale();
+});
+["sd-price", "sd-cost"].forEach(id => $(id).addEventListener("input", () => {
+  if (SD.prod === "custom") sdCustom = { price: $("sd-price").value, cost: $("sd-cost").value };
+  renderSaleResult();
+}));
+$("sd-chips").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (!b) return; SD.amt = Number(b.dataset.v); saveSD(); renderSale(); });
+$("sd-slider").addEventListener("input", () => { SD.amt = Number($("sd-slider").value); saveSD(); renderSale(); });
+$("sd-amt").addEventListener("input", () => { SD.amt = Math.max(0, num($("sd-amt").value)); if (SD.mode === "pct") SD.amt = Math.min(100, SD.amt); saveSD(); renderSale(); });
+$("sd-mode").addEventListener("change", () => {
+  const reg = num($("sd-price").value) || 0, was = salePrice(reg);
+  SD.mode = $("sd-mode").value;
+  SD.amt = SD.mode === "usd" ? Math.round((reg - was) * 100) / 100 : Math.round(reg > 0 ? (1 - was / reg) * 100 : 0);  // keep the same sale price
+  saveSD(); renderSale();
+  $("sd-amt").value = SD.mode === "usd" ? SD.amt.toFixed(2) : String(SD.amt);
+});
+
+window.renderSale = renderSale;
+if (store.get("tab", "calc") === "pricing") renderSale();
 </script>
 </body>
 </html>
