@@ -322,6 +322,8 @@ label.f small { font-size: 13.5px; }
 .qsv .t { font-size: 16.5px; } .qsv .t small { font-size: 14px; }
 .qp label { font-size: 13.5px; }
 details.break > summary { font-size: 15.5px; color: var(--red); font-weight: 600; padding: 4px 0; }
+.chk.toggle { background: var(--raise); border-radius: 10px; padding: 12px; }
+.chk.toggle small { color: var(--muted); font-size: 14px; }
 </style>
 </head>
 <body>
@@ -646,6 +648,7 @@ details.break > summary { font-size: 15.5px; color: var(--red); font-weight: 600
       <section class="card" data-qstep="3" hidden aria-live="polite">
         <h2 class="ph">Price</h2>
         <div id="q-result"></div>
+        <label class="chk toggle"><input type="checkbox" id="q-machineon" checked> <span id="q-machinelbl">Count printer run cost</span></label>
         <label class="f">Price you'll quote<small>Leave empty to use the suggested price</small><div class="money"><input id="q-price" inputmode="decimal" placeholder="suggested"></div></label>
         <div id="q-mine"></div>
         <details class="break"><summary>Details: cost breakdown and bigger orders</summary><div id="q-bd"></div><div id="q-breaks"></div></details>
@@ -698,6 +701,7 @@ details.break > summary { font-size: 15.5px; color: var(--red); font-weight: 600
         <label class="f">PayPal percent<div class="pct"><input id="qr-ppp" inputmode="decimal"></div></label>
         <label class="f">PayPal per payment<div class="money"><input id="qr-ppf" inputmode="decimal"></div></label>
       </div>
+      <label class="chk"><input type="checkbox" id="qr-machineon"> Count printer run cost on new quotes</label>
       <button class="ghost" id="qr-reset" type="button">Reset to standard rates</button>
       <p class="hint">Your filaments are managed in step 2 of a quote.</p>
     </section>
@@ -1716,7 +1720,7 @@ if (store.get("tab", "calc") === "pricing") renderSale();
 (function () {
   const QR_DEFAULTS = {
     mats: [{ n: "PLA", kg: 18 }, { n: "PLA Silk / Matte", kg: 22 }, { n: "PETG", kg: 20 }, { n: "ABS / ASA", kg: 24 }, { n: "TPU", kg: 30 }, { n: "Carbon fiber nylon", kg: 60 }],
-    machine: 0.50, fail: 10, design: 30, labor: 20, min: 15, margin: 40, round: "1", ppp: 3.49, ppf: 0.49
+    machine: 0.50, fail: 10, design: 30, labor: 20, min: 15, margin: 40, machineOn: true, round: "1", ppp: 3.49, ppf: 0.49
   };
   const QR = { ...QR_DEFAULTS, ...store.get("quoteRates", {}) };
   if (!Array.isArray(QR.mats) || !QR.mats.length) QR.mats = QR_DEFAULTS.mats.map(m => ({ ...m }));
@@ -1724,7 +1728,7 @@ if (store.get("tab", "calc") === "pricing") renderSale();
   // quotes saved before filaments had ids stored the list position instead
   const matId = v => (typeof v === "number" ? (QR.mats[v] || QR.mats[0]).id : (QR.mats.some(m => m.id === v) ? v : QR.mats[0].id));
   const matOf = v => QR.mats.find(m => m.id === matId(v)) || QR.mats[0];
-  const blank = () => ({ name: "", cust: "", mat: 0, parts: [{ n: "", g: "", hr: "", q: 1 }], n: 1, hw: "", design: "", finishH: "", ship: "", pay: "website", shipped: true, margin: 40, price: "", lead: 7, valid: 14, showBreaks: false });
+  const blank = () => ({ name: "", cust: "", mat: 0, parts: [{ n: "", g: "", hr: "", q: 1 }], n: 1, hw: "", design: "", finishH: "", ship: "", pay: "website", shipped: true, machineOn: true, margin: 40, price: "", lead: 7, valid: 14, showBreaks: false });
   // hours: "2.5", "2:30" (2 h 30 min) or "2h 30m"
   const hrs = v => {
     const t = String(v == null ? "" : v).trim().toLowerCase();
@@ -1762,7 +1766,8 @@ if (store.get("tab", "calc") === "pricing") renderSale();
     const fail = 1 + Math.max(0, QR.fail) / 100;
     const filament = grams / 1000 * mat.kg * fail * N;
     const printHrs = unitHrs * N;
-    const machine = printHrs * QR.machine * fail;
+    const machineFull = printHrs * QR.machine * fail;
+    const machine = q.machineOn === false ? 0 : machineFull;
     const extras = num(q.hw) * N;
     const designHrs = num(q.design), finishHrs = hrs(q.finishH) * N;
     const design = designHrs * QR.design, finish = finishHrs * QR.labor;
@@ -1779,7 +1784,7 @@ if (store.get("tab", "calc") === "pricing") renderSale();
     const breakEven = (all + fm.f) / (1 - fm.r) - S;
     if (Number.isFinite(suggested)) suggested = Math.max(suggested, QR.min - S, 0);
     suggested = Number.isFinite(suggested) ? roundUp(suggested, step()) : NaN;
-    return { N, mat, grams, unitHrs, filament, machine, extras, design, finish, designHrs, finishHrs, printHrs, packLabel, cash, time, all, S, fm, m, suggested, breakEven };
+    return { N, mat, grams, unitHrs, filament, machine, machineFull, extras, design, finish, designHrs, finishHrs, printHrs, packLabel, cash, time, all, S, fm, m, suggested, breakEven };
   }
   function outcome(c, P) {
     const G = P + c.S, fees = G > 0 && c.fm.r + c.fm.f > 0 ? G * c.fm.r + c.fm.f : 0;
@@ -1808,13 +1813,13 @@ if (store.get("tab", "calc") === "pricing") renderSale();
     const set = (id, v) => { $(id).value = v == null ? "" : v; };
     set("q-name", Q.name); set("q-cust", Q.cust); set("q-n", Q.n); set("q-hw", Q.hw); set("q-design", Q.design); set("q-finish", Q.finishH);
     set("q-ship", Q.ship); set("q-pay", Q.pay); set("q-margin", Q.margin); set("q-price", Q.price); set("q-lead", Q.lead); set("q-valid", Q.valid);
-    $("q-shipped").checked = !!Q.shipped; $("q-showbreaks").checked = !!Q.showBreaks;
+    $("q-shipped").checked = !!Q.shipped; $("q-machineon").checked = Q.machineOn !== false; $("q-showbreaks").checked = !!Q.showBreaks;
   }
   function readForm() {
     Q.name = $("q-name").value; Q.cust = $("q-cust").value; Q.mat = matId($("q-mat").value); Q.n = $("q-n").value;
     Q.hw = $("q-hw").value; Q.design = $("q-design").value; Q.finishH = $("q-finish").value; Q.ship = $("q-ship").value;
     Q.pay = $("q-pay").value; Q.margin = $("q-margin").value; Q.price = $("q-price").value; Q.lead = $("q-lead").value; Q.valid = $("q-valid").value;
-    Q.shipped = $("q-shipped").checked; Q.showBreaks = $("q-showbreaks").checked;
+    Q.shipped = $("q-shipped").checked; Q.machineOn = $("q-machineon").checked; Q.showBreaks = $("q-showbreaks").checked;
     store.set("quoteDraft", Q);
   }
   const hm = h => { const t = Math.round(h * 60); return t < 60 ? `${t} min` : `${Math.floor(t / 60)} h${t % 60 ? " " + (t % 60) + " min" : ""}`; };
@@ -1837,6 +1842,7 @@ if (store.get("tab", "calc") === "pricing") renderSale();
       $("q-mine").innerHTML = ""; $("q-bd").innerHTML = ""; $("q-breaks").innerHTML = ""; $("q-text").value = "";
       $("q-bar").innerHTML = `<span>Add a part to see the price</span>`; return;
     }
+    $("q-machinelbl").innerHTML = c.machineFull > 0 ? `Count printer run cost <small>(${money(c.machineFull)} for ${hm(c.printHrs)})</small>` : "Count printer run cost";
     $("q-price").placeholder = Number.isFinite(c.suggested) ? c.suggested.toFixed(2) + " (suggested)" : "suggested";
     if (!Number.isFinite(c.suggested)) {
       $("q-result").innerHTML = `<div class="lossbar">A ${(c.m * 100).toFixed(0)}% margin isn't possible after ${c.fm.label.toLowerCase()}. Lower the target margin.</div>`;
@@ -1861,7 +1867,7 @@ if (store.get("tab", "calc") === "pricing") renderSale();
       ${row("Price", money(o.P))}${c.S ? row("Shipping charged", money(c.S)) : ""}${row("Buyer pays", money(o.G), "tot")}
       ${row(c.fm.label, "−" + money(o.fees))}
       ${row(`Filament: ${Math.round(c.grams * c.N)} g ${esc(c.mat.n)}${QR.fail ? ` +${QR.fail}% for fails` : ""}`, "−" + money(c.filament))}
-      ${row(`Printer time: ${hm(c.printHrs)}`, "−" + money(c.machine))}
+      ${Q.machineOn === false ? row(`Printer time: ${hm(c.printHrs)} (run cost not counted)`, money(0)) : row(`Printer time: ${hm(c.printHrs)}`, "−" + money(c.machine))}
       ${c.extras ? row("Extras", "−" + money(c.extras)) : ""}
       ${c.packLabel ? row("Packaging + label", "−" + money(c.packLabel)) : ""}
       ${c.design ? row(`Your design time: ${hm(c.designHrs)}`, "−" + money(c.design)) : ""}
@@ -1977,14 +1983,14 @@ if (store.get("tab", "calc") === "pricing") renderSale();
     $("q-mats").innerHTML = `<h2>Your filaments · price per kg</h2><p class="hint" style="margin:0">Tap ☆ to favorite: favorites go to the top of the list, and new quotes start with your first one. Tap a name or price to change it. Tap × twice to delete.</p>` + QR.mats.map((m, i) => `<div class="qmat" data-mi="${i}"><button type="button" class="star${m.fav ? " on" : ""}" data-fav="${i}" aria-pressed="${!!m.fav}" aria-label="Favorite ${esc(m.n)}">${m.fav ? "★" : "☆"}</button><input class="plain" data-mk="n" maxlength="40" value="${esc(m.n)}" aria-label="Filament name"><div class="money"><input inputmode="decimal" data-mk="kg" value="${m.kg.toFixed(2)}" aria-label="Price per kg"></div><button type="button" class="x" data-mdel="${i}" aria-label="Remove ${esc(m.n)}"${QR.mats.length < 2 ? " hidden" : ""}>×</button></div>`).join("");
     const set = { "qr-machine": QR.machine, "qr-fail": QR.fail, "qr-design": QR.design, "qr-labor": QR.labor, "qr-min": QR.min, "qr-margin": QR.margin, "qr-ppp": QR.ppp, "qr-ppf": QR.ppf };
     for (const [id, v] of Object.entries(set)) $(id).value = v;
-    $("qr-round").value = String(QR.round);
+    $("qr-round").value = String(QR.round); $("qr-machineon").checked = QR.machineOn !== false;
   }
   function readRates() {
     QR.machine = num($("qr-machine").value); QR.fail = num($("qr-fail").value); QR.design = num($("qr-design").value); QR.labor = num($("qr-labor").value);
-    QR.min = num($("qr-min").value); QR.margin = num($("qr-margin").value); QR.ppp = num($("qr-ppp").value); QR.ppf = num($("qr-ppf").value); QR.round = $("qr-round").value;
+    QR.min = num($("qr-min").value); QR.margin = num($("qr-margin").value); QR.ppp = num($("qr-ppp").value); QR.ppf = num($("qr-ppf").value); QR.round = $("qr-round").value; QR.machineOn = $("qr-machineon").checked;
     store.set("quoteRates", QR);
   }
-  ["qr-machine", "qr-fail", "qr-design", "qr-labor", "qr-min", "qr-margin", "qr-ppp", "qr-ppf", "qr-round"].forEach(id => $(id).addEventListener("input", () => { readRates(); render(); }));
+  ["qr-machine", "qr-fail", "qr-design", "qr-labor", "qr-min", "qr-margin", "qr-ppp", "qr-ppf", "qr-round", "qr-machineon"].forEach(id => $(id).addEventListener("input", () => { readRates(); render(); }));
   $("q-mats").addEventListener("input", e => {
     const row = e.target.closest("[data-mi]"); if (!row) return;
     const m = QR.mats[Number(row.dataset.mi)];
@@ -2045,7 +2051,7 @@ if (store.get("tab", "calc") === "pricing") renderSale();
     const last = $("q-parts").querySelector(".qp:last-child input"); if (last) last.focus();
   });
   ["q-name", "q-cust", "q-n", "q-hw", "q-design", "q-finish", "q-ship", "q-margin", "q-price", "q-lead", "q-valid"].forEach(id => $(id).addEventListener("input", render));
-  ["q-mat", "q-pay", "q-shipped", "q-showbreaks"].forEach(id => $(id).addEventListener("change", render));
+  ["q-mat", "q-pay", "q-shipped", "q-showbreaks", "q-machineon"].forEach(id => $(id).addEventListener("change", render));
   $("q-copy").addEventListener("click", async () => {
     const t = $("q-text").value; if (!t) return;
     try { await navigator.clipboard.writeText(t); }
@@ -2060,7 +2066,7 @@ if (store.get("tab", "calc") === "pricing") renderSale();
   /* ---- screens: quote list, and one quote in three steps ---- */
   function freshQuote() {
     const q = blank();
-    q.margin = QR.margin || 40; q.mat = (QR.mats.find(m => m.fav) || QR.mats[0]).id;
+    q.margin = QR.margin || 40; q.machineOn = QR.machineOn !== false; q.mat = (QR.mats.find(m => m.fav) || QR.mats[0]).id;
     q.ship = (shipCfg.flatCents / 100).toFixed(2);
     return q;
   }
