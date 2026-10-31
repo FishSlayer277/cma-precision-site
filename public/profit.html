@@ -267,6 +267,61 @@ details.break > summary { font-size: 15px; padding: 6px 0; color: var(--ink); fo
 .qsv select { width: auto; padding: 6px 8px; font-size: 14px; }
 .qsv .del { font-size: 13px; }
 .st-quoted { color: var(--warn); } .st-accepted { color: var(--good); } .st-done { color: var(--muted); }
+
+/* ===== Simpler, easier to read (bottom tabs, bigger type) ===== */
+:root { --muted: #c4bcbc; --line: #332a2a; }
+body { font-size: 16.5px; padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
+body.has-bar { padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px)); }
+header h1 { font-size: 28px; }
+header .sub { font-size: 13.5px; }
+h2 { font: 700 18px/1.25 var(--f-body); letter-spacing: 0; text-transform: none; color: var(--ink); }
+h2.ph { font-size: 22px; }
+.toolhead h2 { font-size: 22px; }
+h3.sh, h3.mg { margin: 6px 0 0; font: 700 16px var(--f-body); color: var(--ink); }
+h3.sh small { font-weight: 400; color: var(--muted); font-size: 14px; }
+h3.mg { margin: 14px 2px 0; font-size: 13.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h3.mg:first-child { margin-top: 0; }
+.lead { margin: 0; color: var(--muted); font-size: 15px; }
+.hint { font-size: 14.5px; }
+label.f { font-size: 15px; gap: 6px; }
+label.f small { font-size: 13.5px; }
+.chk { font-size: 15px; }
+.card { padding: 18px 16px; gap: 14px; border-radius: 14px; }
+.ghost { font-size: 15px; padding: 11px 14px; border-radius: 8px; }
+.btn { border-radius: 8px; }
+.btn.wide { font-size: 16px; padding: 15px; }
+.plain, .money input, .pct input { font-size: 17px; }
+.answer, .ord .top, .srow .nm { font-size: 15.5px; }
+.ord .sub, .split { font-size: 14.5px; }
+.kpi > span { font-size: 12px; }
+.mi { padding: 16px; }
+.mi b { font-size: 17px; }
+.back { font-size: 16px; padding: 6px 0; }
+.results { top: env(safe-area-inset-top, 0px); }
+/* bottom tab bar */
+.tabs { position: fixed; top: auto; left: 0; right: 0; bottom: 0; z-index: 30; margin: 0; overflow: visible;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; background: var(--surface); border-top: 1px solid var(--line);
+  padding: 6px max(6px, env(safe-area-inset-left, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)); }
+.tabs button { display: grid; justify-items: center; gap: 3px; border: 0; border-radius: 10px; background: none; color: var(--muted); padding: 7px 2px; font: 600 12.5px var(--f-body); }
+.tabs button svg { width: 25px; height: 25px; }
+.tabs button[aria-selected="true"] { background: none; color: var(--red); }
+.tabs button[aria-selected="true"] svg { stroke-width: 2.4; }
+/* quotes */
+.pagehead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.steps button { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 9px 4px; font: 700 15px var(--f-body); cursor: pointer; }
+.steps button span { font-weight: 600; }
+.steps button.on { background: var(--red-deep); border-color: var(--red-deep); color: #fff; }
+.steps button.done { color: var(--ink); border-color: var(--red-deep); }
+.pricebar { position: fixed; left: 0; right: 0; z-index: 25; bottom: calc(66px + env(safe-area-inset-bottom, 0px)); margin: 0 auto; max-width: 520px;
+  width: calc(100% - 24px); display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--raise); border: 1px solid var(--red-deep);
+  border-radius: 12px; padding: 12px 14px; font-size: 15.5px; box-shadow: 0 8px 24px rgba(0,0,0,.6); cursor: pointer; }
+.pricebar b { font-size: 20px; margin-left: 4px; }
+.pricebar .good, .pricebar .bad { font-weight: 700; }
+.qsv { padding: 14px 0; }
+.qsv .t { font-size: 16.5px; } .qsv .t small { font-size: 14px; }
+.qp label { font-size: 13.5px; }
+details.break > summary { font-size: 15.5px; color: var(--red); font-weight: 600; padding: 4px 0; }
 </style>
 </head>
 <body>
@@ -278,19 +333,26 @@ details.break > summary { font-size: 15px; padding: 6px 0; color: var(--ink); fo
   </header>
 
   <nav class="tabs" id="tabs" role="tablist" aria-label="Sections">
-    <button type="button" role="tab" data-tab="calc">Calculator</button>
-    <button type="button" role="tab" data-tab="pricing">Pricing</button>
-    <button type="button" role="tab" data-tab="sales">Sales</button>
-    <button type="button" role="tab" data-tab="more">More</button>
+    <button type="button" role="tab" data-tab="calc"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M16 15v2"/></svg><span>Calculator</span></button>
+    <button type="button" role="tab" data-tab="quotes"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg><span>Quotes</span></button>
+    <button type="button" role="tab" data-tab="sales"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Sales</span></button>
+    <button type="button" role="tab" data-tab="more"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>More</span></button>
   </nav>
 
   <!-- MORE (menu) -->
   <div class="panel" data-panel="more" hidden>
     <div class="menu">
-      <button type="button" class="mi" data-go="quotes"><b>Custom quotes</b><span>Price a custom job and send the customer a quote</span></button>
-      <button type="button" class="mi" data-go="costs"><b>Costs</b><span>Product costs, packaging, label, fees</span></button>
+      <h3 class="mg">Pricing tools</h3>
+      <button type="button" class="mi" data-go="pricing" data-opentool="sale"><b>Sale &amp; discount</b><span>What a sale or promo code costs you</span></button>
+      <button type="button" class="mi" data-go="pricing" data-opentool="try"><b>Try a price</b><span>A new price next to what you charge now</span></button>
+      <button type="button" class="mi" data-go="pricing" data-opentool="suggest"><b>Price suggester</b><span>Prices that hit the margin you want</span></button>
+      <button type="button" class="mi" data-go="pricing" data-opentool="whatif"><b>Raise all prices</b><span>How many sales you could lose and break even</span></button>
+      <h3 class="mg">Shop</h3>
       <button type="button" class="mi" data-go="bundles"><b>Bundles</b><span>Build a kit and see what it earns</span></button>
       <button type="button" class="mi" data-go="hours"><b>Print time</b><span>Which product earns the most per printer hour</span></button>
+      <h3 class="mg">Settings</h3>
+      <button type="button" class="mi" data-go="costs"><b>Costs &amp; fees</b><span>Product costs, packaging, label, Stripe and Etsy fees</span></button>
+      <button type="button" class="mi" data-go="qset"><b>Quote settings</b><span>Your hourly rates, printer cost, usual margin</span></button>
     </div>
   </div>
 
@@ -378,7 +440,7 @@ details.break > summary { font-size: 15px; padding: 6px 0; color: var(--ink); fo
 
   <!-- PRICING -->
   <div class="panel" data-panel="pricing" hidden>
-    <div class="menu" id="pr-menu">
+    <div class="menu" id="pr-menu" hidden>
       <button type="button" class="mi" data-tool="sale"><b>Sale &amp; discount</b><span>What a sale or promo code costs you</span></button>
       <button type="button" class="mi" data-tool="try"><b>Try a price</b><span>A new price next to what you charge now</span></button>
       <button type="button" class="mi" data-tool="suggest"><b>Price suggester</b><span>Prices that hit the margin you want</span></button>
@@ -386,7 +448,7 @@ details.break > summary { font-size: 15px; padding: 6px 0; color: var(--ink); fo
     </div>
 
     <section class="card" data-tool="try" hidden>
-      <div class="toolhead"><button type="button" class="back" data-tool="">← Pricing</button><h2>Try a price</h2></div>
+      <div class="toolhead"><button type="button" class="back" data-go="more">← More</button><h2>Try a price</h2></div>
       <p class="hint">Type a price you're thinking about. Nothing changes on the website unless you tap "Use these test prices".</p>
       <label class="f">Product<select id="tp-prod" class="plain"></select></label>
       <label class="f">Test price
@@ -412,7 +474,7 @@ details.break > summary { font-size: 15px; padding: 6px 0; color: var(--ink); fo
     </section>
 
     <section class="card" data-tool="sale" hidden>
-      <div class="toolhead"><button type="button" class="back" data-tool="">← Pricing</button><h2>Sale &amp; discount</h2></div>
+      <div class="toolhead"><button type="button" class="back" data-go="more">← More</button><h2>Sale &amp; discount</h2></div>
       <p class="hint">Pick a product and a discount. The red number is the profit you give up on each piece. Fees are worked out on the sale price, the way Stripe and Etsy charge them.</p>
       <label class="f">Product<select id="sd-prod" class="plain"></select></label>
       <div class="periods" id="sd-chips" role="group" aria-label="Quick discounts">
@@ -438,7 +500,7 @@ details.break > summary { font-size: 15px; padding: 6px 0; color: var(--ink); fo
     </section>
 
     <section class="card" data-tool="suggest" hidden>
-      <div class="toolhead"><button type="button" class="back" data-tool="">← Pricing</button><h2>Price suggester</h2></div>
+      <div class="toolhead"><button type="button" class="back" data-go="more">← More</button><h2>Price suggester</h2></div>
       <p class="hint">Pick the margin you want. Each product gets a suggested price for the website and for Etsy (Etsy's fees are higher). Yellow = higher than now. Green = you could charge less. A dash means that margin isn't reachable.</p>
       <div class="row2">
         <label class="f">Website margin<div class="pct"><input id="pr-tw" inputmode="decimal"></div></label>
@@ -463,7 +525,7 @@ details.break > summary { font-size: 15px; padding: 6px 0; color: var(--ink); fo
     </section>
 
     <section class="card" data-tool="whatif" hidden>
-      <div class="toolhead"><button type="button" class="back" data-tool="">← Pricing</button><h2>Raise all prices</h2></div>
+      <div class="toolhead"><button type="button" class="back" data-go="more">← More</button><h2>Raise all prices</h2></div>
       <p class="hint">Higher prices can lose some sales. This shows how many you could lose and still make the same profit.</p>
       <div class="row2">
         <label class="f">Raise every price by<div class="money"><input id="wi-amt" inputmode="decimal" value="1.00"></div></label>
@@ -516,99 +578,128 @@ details.break > summary { font-size: 15px; padding: 6px 0; color: var(--ink); fo
 
   <!-- CUSTOM QUOTES -->
   <div class="panel" data-panel="quotes" hidden>
+    <!-- list of quotes -->
+    <div class="panel" id="q-listview">
+      <div class="pagehead"><h2 class="ph">Custom quotes</h2><button class="btn" id="q-new" type="button">+ New quote</button></div>
+      <section class="card">
+        <div id="q-saved"></div>
+        <p class="hint">Saved on this phone. When a customer pays, tap “Log as sale” so the job counts in your Sales.</p>
+      </section>
+    </div>
+
+    <!-- one quote, in three steps -->
+    <div class="panel" id="q-editview" hidden>
+      <div class="pagehead"><button type="button" class="back" id="q-back">← Quotes</button></div>
+      <ol class="steps" id="q-steps">
+        <li><button type="button" data-step="1">1<span>Job</span></button></li>
+        <li><button type="button" data-step="2">2<span>Extras</span></button></li>
+        <li><button type="button" data-step="3">3<span>Price</span></button></li>
+      </ol>
+
+      <section class="card" data-qstep="1">
+        <h2 class="ph">The job</h2>
+        <label class="f">Job name<input type="text" id="q-name" class="plain" maxlength="80" placeholder="e.g. Custom die rack, 8 hole"></label>
+        <div class="row2">
+          <label class="f">Customer<small>optional</small><input type="text" id="q-cust" class="plain" maxlength="60" placeholder="First name"></label>
+          <label class="f">Units ordered<small>&nbsp;</small><input id="q-n" class="plain" inputmode="numeric" value="1"></label>
+        </div>
+        <h3 class="sh">Printed parts <small>for one unit</small></h3>
+        <div id="q-parts"></div>
+        <button class="ghost" id="q-addpart" type="button">+ Add a part</button>
+        <button class="btn wide" type="button" data-step="2">Next: extras →</button>
+      </section>
+
+      <section class="card" data-qstep="2" hidden>
+        <h2 class="ph">Extras</h2>
+        <p class="lead">Already filled in with your usual choices. Change only what's different for this job.</p>
+        <label class="f">Filament<select id="q-mat" class="plain"></select></label>
+        <div class="actions"><button class="ghost" id="q-newfil" type="button">+ Add my own filament</button><button class="ghost" id="q-manfil" type="button" aria-expanded="false">★ Favorites &amp; delete</button></div>
+        <div class="addsale" id="q-mats" hidden></div>
+        <div class="addsale" id="q-filform" hidden>
+          <label class="f">Filament name<small>brand, type, color</small><input type="text" id="qf-name" class="plain" maxlength="40" placeholder="e.g. Polymaker PLA Pro, Black"></label>
+          <div class="row2">
+            <label class="f">Spool price<small>what you paid, with shipping</small><div class="money"><input id="qf-price" inputmode="decimal" placeholder="0.00"></div></label>
+            <label class="f">Spool weight<small>grams of filament</small><input id="qf-g" class="plain" inputmode="decimal" value="1000"></label>
+          </div>
+          <div class="answer" id="qf-out">Enter the spool price.</div>
+          <div class="actions"><button class="btn" id="qf-save" type="button">Save filament</button><button class="ghost" id="qf-cancel" type="button">Cancel</button></div>
+          <p class="msg" id="qf-msg" hidden></p>
+        </div>
+        <div class="row2">
+          <label class="f">Design time<small>hours, one time</small><input id="q-design" class="plain" inputmode="decimal" placeholder="0"></label>
+          <label class="f">Cleanup / assembly<small>hours per unit</small><input id="q-finish" class="plain" inputmode="decimal" placeholder="0"></label>
+        </div>
+        <div class="row2">
+          <label class="f">Extras per unit<small>magnets, inserts</small><div class="money"><input id="q-hw" inputmode="decimal" placeholder="0.00"></div></label>
+          <label class="f">Shipping you charge<small>0 for pickup</small><div class="money"><input id="q-ship" inputmode="decimal"></div></label>
+        </div>
+        <label class="chk"><input type="checkbox" id="q-shipped" checked> I'm mailing it (count packaging + label)</label>
+        <div class="row2">
+          <label class="f">How they'll pay<select id="q-pay" class="plain">
+            <option value="website">Card (website)</option><option value="paypal">PayPal</option><option value="etsy">Etsy listing</option><option value="cash">Cash / Venmo</option>
+          </select></label>
+          <label class="f">Profit margin<div class="pct"><input id="q-margin" inputmode="decimal"></div></label>
+        </div>
+        <button class="btn wide" type="button" data-step="3">Next: price →</button>
+      </section>
+
+      <section class="card" data-qstep="3" hidden aria-live="polite">
+        <h2 class="ph">Price</h2>
+        <div id="q-result"></div>
+        <label class="f">Price you'll quote<small>Leave empty to use the suggested price</small><div class="money"><input id="q-price" inputmode="decimal" placeholder="suggested"></div></label>
+        <div id="q-mine"></div>
+        <details class="break"><summary>Details: cost breakdown and bigger orders</summary><div id="q-bd"></div><div id="q-breaks"></div></details>
+      </section>
+
+      <section class="card" data-qstep="3" hidden>
+        <h2 class="ph">Message for the customer</h2>
+        <textarea id="q-text" class="qtext" aria-label="Quote message"></textarea>
+        <div class="actions"><button class="btn" id="q-copy" type="button">Copy message</button><button class="ghost" id="q-share" type="button" hidden>Share…</button></div>
+        <details class="break"><summary>Message options</summary>
+          <div class="inner2">
+            <div class="row2">
+              <label class="f">Ready in<small>business days</small><input id="q-lead" class="plain" inputmode="numeric"></label>
+              <label class="f">Price good for<small>days</small><input id="q-valid" class="plain" inputmode="numeric"></label>
+            </div>
+            <label class="chk"><input type="checkbox" id="q-showbreaks"> Include bigger-order prices</label>
+          </div>
+        </details>
+        <button class="btn wide" id="q-save" type="button">Save quote</button>
+        <p class="msg" id="q-msg" hidden></p>
+      </section>
+
+      <div class="pricebar" id="q-bar" role="button" tabindex="0" aria-label="See the price"></div>
+    </div>
+  </div>
+
+  <!-- QUOTE SETTINGS -->
+  <div class="panel" data-panel="qset" hidden>
     <button type="button" class="back" data-go="more">← More</button>
     <section class="card">
-      <h2>Custom quote</h2>
-      <p class="hint">For jobs that aren't in your shop. Add each printed part with its print time in hours (2.5 = 2 hours 30 minutes), your time, and extras. The app works out a price that hits your margin, after your costs, your time and the payment fees.</p>
+      <h2 class="ph">Quote settings</h2>
+      <p class="lead">Used for every custom quote. Your time counts as a cost, so a quote's profit is on top of paying yourself.</p>
       <div class="row2">
-        <label class="f">Job name<input type="text" id="q-name" class="plain" maxlength="80" placeholder="e.g. Custom die rack, 8 hole"></label>
-        <label class="f">Customer<small>optional</small><input type="text" id="q-cust" class="plain" maxlength="60" placeholder="First name"></label>
-      </div>
-      <label class="f">Filament<select id="q-mat" class="plain"></select></label>
-      <div class="actions"><button class="ghost" id="q-newfil" type="button">+ Add my own filament</button><button class="ghost" id="q-manfil" type="button" aria-expanded="false">★ Favorites &amp; delete</button></div>
-      <div class="addsale" id="q-mats" hidden></div>
-      <div class="addsale" id="q-filform" hidden>
-        <label class="f">Filament name<small>brand, type, color</small><input type="text" id="qf-name" class="plain" maxlength="40" placeholder="e.g. Polymaker PLA Pro, Black"></label>
-        <div class="row2">
-          <label class="f">Spool price<small>what you paid, with shipping</small><div class="money"><input id="qf-price" inputmode="decimal" placeholder="0.00"></div></label>
-          <label class="f">Spool weight<small>grams of filament</small><input id="qf-g" class="plain" inputmode="decimal" value="1000"></label>
-        </div>
-        <div class="answer" id="qf-out">Enter the spool price.</div>
-        <div class="actions"><button class="btn" id="qf-save" type="button">Save filament</button><button class="ghost" id="qf-cancel" type="button">Cancel</button></div>
-        <p class="msg" id="qf-msg" hidden></p>
-      </div>
-      <div id="q-parts"></div>
-      <button class="ghost" id="q-addpart" type="button">+ Add a part</button>
-      <div class="row2">
-        <label class="f">Units ordered<input id="q-n" class="plain" inputmode="numeric" value="1"></label>
-        <label class="f">Extras per unit<small>magnets, inserts, screws</small><div class="money"><input id="q-hw" inputmode="decimal" placeholder="0.00"></div></label>
+        <label class="f">Printer cost per hour<small>power, wear, nozzles</small><div class="money"><input id="qr-machine" inputmode="decimal"></div></label>
+        <label class="f">Failed prints<small>extra filament + time</small><div class="pct"><input id="qr-fail" inputmode="decimal"></div></label>
       </div>
       <div class="row2">
-        <label class="f">Design / modeling time<small>hours, one time</small><input id="q-design" class="plain" inputmode="decimal" placeholder="0"></label>
-        <label class="f">Cleanup / assembly<small>hours per unit</small><input id="q-finish" class="plain" inputmode="decimal" placeholder="0"></label>
+        <label class="f">Your design rate<small>per hour</small><div class="money"><input id="qr-design" inputmode="decimal"></div></label>
+        <label class="f">Your shop rate<small>cleanup, per hour</small><div class="money"><input id="qr-labor" inputmode="decimal"></div></label>
       </div>
       <div class="row2">
-        <label class="f">Shipping you charge<small>0 for pickup</small><div class="money"><input id="q-ship" inputmode="decimal"></div></label>
-        <label class="f">How they'll pay<select id="q-pay" class="plain">
-          <option value="website">Card (website / Stripe)</option><option value="paypal">PayPal</option><option value="etsy">Etsy custom listing</option><option value="cash">Cash / Venmo friends</option>
-        </select></label>
+        <label class="f">Usual profit margin<small>new quotes start here</small><div class="pct"><input id="qr-margin" inputmode="decimal"></div></label>
+        <label class="f">Minimum order<small>smallest total</small><div class="money"><input id="qr-min" inputmode="decimal"></div></label>
       </div>
-      <label class="chk"><input type="checkbox" id="q-shipped" checked> I'm shipping it (count packaging + label)</label>
-      <label class="f">Target profit margin<div class="pct"><input id="q-margin" inputmode="decimal"></div></label>
-    </section>
-
-    <section class="card" aria-live="polite">
-      <h2>Your quote</h2>
-      <div id="q-result"></div>
-      <label class="f">Price you'll quote<small>Leave empty to use the suggested price</small><div class="money"><input id="q-price" inputmode="decimal" placeholder="suggested"></div></label>
-      <div id="q-mine"></div>
-      <details class="break"><summary>Show the full breakdown</summary><div id="q-bd"></div></details>
-      <div id="q-breaks"></div>
-    </section>
-
-    <section class="card">
-      <h2>Message for the customer</h2>
       <div class="row2">
-        <label class="f">Ready in<small>business days after they say yes</small><input id="q-lead" class="plain" inputmode="numeric"></label>
-        <label class="f">Quote good for<small>days</small><input id="q-valid" class="plain" inputmode="numeric"></label>
+        <label class="f">Round prices up to<select id="qr-round" class="plain"><option value="0.25">$0.25</option><option value="0.5">$0.50</option><option value="1">$1</option><option value="5">$5</option></select></label>
+        <span></span>
       </div>
-      <label class="chk"><input type="checkbox" id="q-showbreaks"> Include bigger-order prices</label>
-      <textarea id="q-text" class="qtext" aria-label="Quote message"></textarea>
-      <div class="actions"><button class="btn" id="q-copy" type="button">Copy message</button><button class="ghost" id="q-share" type="button" hidden>Share…</button></div>
-      <div class="actions"><button class="btn" id="q-save" type="button">Save quote</button><button class="ghost" id="q-new" type="button">New quote</button></div>
-      <p class="msg" id="q-msg" hidden></p>
-    </section>
-
-    <section class="card">
-      <h2>Saved quotes</h2>
-      <p class="hint">Saved on this phone. When a customer pays, tap “Log as sale” so it counts in your Sales totals.</p>
-      <div id="q-saved"></div>
-    </section>
-
-    <section class="card">
-      <details class="costs">
-        <summary><h2>Quote rates</h2></summary>
-        <div class="inner2">
-          <p class="hint tip">Used for every quote. Your filaments are managed under the Filament picker at the top. Your time is counted as a cost, so the profit shown is on top of paying yourself.</p>
-          <div class="row2">
-            <label class="f">Printer cost per hour<small>power + wear + nozzles</small><div class="money"><input id="qr-machine" inputmode="decimal"></div></label>
-            <label class="f">Failed-print allowance<small>extra filament + time</small><div class="pct"><input id="qr-fail" inputmode="decimal"></div></label>
-          </div>
-          <div class="row2">
-            <label class="f">Your design rate<small>per hour</small><div class="money"><input id="qr-design" inputmode="decimal"></div></label>
-            <label class="f">Your shop rate<small>cleanup, assembly, per hour</small><div class="money"><input id="qr-labor" inputmode="decimal"></div></label>
-          </div>
-          <div class="row2">
-            <label class="f">Minimum order<small>smallest total you'll quote</small><div class="money"><input id="qr-min" inputmode="decimal"></div></label>
-            <label class="f">Round prices up to<select id="qr-round" class="plain"><option value="0.25">$0.25</option><option value="0.5">$0.50</option><option value="1">$1</option><option value="5">$5</option></select></label>
-          </div>
-          <div class="row2">
-            <label class="f">PayPal percent<div class="pct"><input id="qr-ppp" inputmode="decimal"></div></label>
-            <label class="f">PayPal per payment<div class="money"><input id="qr-ppf" inputmode="decimal"></div></label>
-          </div>
-          <button class="ghost" id="qr-reset" type="button">Reset quote rates</button>
-        </div>
-      </details>
+      <div class="row2">
+        <label class="f">PayPal percent<div class="pct"><input id="qr-ppp" inputmode="decimal"></div></label>
+        <label class="f">PayPal per payment<div class="money"><input id="qr-ppf" inputmode="decimal"></div></label>
+      </div>
+      <button class="ghost" id="qr-reset" type="button">Reset to standard rates</button>
+      <p class="hint">Your filaments are managed in step 2 of a quote.</p>
     </section>
   </div>
 
@@ -840,33 +931,34 @@ const esc = t => String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g,
 const pct = n => (Number.isFinite(n) ? n.toFixed(1) : "–") + "%";
 
 /* ---------- tabs ---------- */
-const TABS = ["calc", "sales", "pricing", "more", "bundles", "hours", "costs", "quotes"];
-const UNDER_MORE = ["bundles", "hours", "costs", "quotes"];
+const TABS = ["calc", "quotes", "sales", "more", "pricing", "bundles", "hours", "costs", "qset"];
+const UNDER_MORE = ["pricing", "bundles", "hours", "costs", "qset"];
 function showTool(name) {
   // Pricing tab: show the menu, or exactly one tool
-  $("pr-menu").hidden = !!name;
+  $("pr-menu").hidden = true;
   document.querySelectorAll('[data-panel="pricing"] section[data-tool]').forEach(s => { s.hidden = s.dataset.tool !== name; });
   store.set("prtool", name || "");
   window.scrollTo(0, 0);
 }
 function showTab(t, keepTool) {
   if (!TABS.includes(t)) t = "calc";
+  if (t === "pricing" && !keepTool) { const tl = store.get("prtool", ""); if (tl) { showTab("pricing", true); showTool(tl); return; } t = "more"; }
   document.querySelectorAll("[data-panel]").forEach(el => { el.hidden = el.dataset.panel !== t; });
   const lit = UNDER_MORE.includes(t) ? "more" : t;
   document.querySelectorAll("#tabs [data-tab]").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === lit));
-  if (t === "pricing" && !keepTool) showTool("");
   store.set("tab", t);
   if (t === "sales") openSales();
   if (t === "pricing") renderPricing();
   if (t === "hours") renderHours();
   if (t === "bundles" && window.renderBundles) window.renderBundles();
   if (t === "costs" && window.renderFil) window.renderFil();
-  if (t === "quotes" && window.renderQuote) window.renderQuote();
+  if ((t === "quotes" || t === "qset") && window.renderQuote) window.renderQuote();
   window.scrollTo(0, 0);
 }
 $("tabs").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if (b) showTab(b.dataset.tab); });
 document.addEventListener("click", e => {
-  const go = e.target.closest("[data-go]"); if (go) { showTab(go.dataset.go); return; }
+  const go = e.target.closest("[data-go]");
+  if (go) { const tl = go.dataset.opentool; showTab(go.dataset.go, !!tl); if (tl) showTool(tl); return; }
   const tool = e.target.closest("button[data-tool]"); if (tool) showTool(tool.dataset.tool);
 });
 
@@ -1624,7 +1716,7 @@ if (store.get("tab", "calc") === "pricing") renderSale();
 (function () {
   const QR_DEFAULTS = {
     mats: [{ n: "PLA", kg: 18 }, { n: "PLA Silk / Matte", kg: 22 }, { n: "PETG", kg: 20 }, { n: "ABS / ASA", kg: 24 }, { n: "TPU", kg: 30 }, { n: "Carbon fiber nylon", kg: 60 }],
-    machine: 0.50, fail: 10, design: 30, labor: 20, min: 15, round: "1", ppp: 3.49, ppf: 0.49
+    machine: 0.50, fail: 10, design: 30, labor: 20, min: 15, margin: 40, round: "1", ppp: 3.49, ppf: 0.49
   };
   const QR = { ...QR_DEFAULTS, ...store.get("quoteRates", {}) };
   if (!Array.isArray(QR.mats) || !QR.mats.length) QR.mats = QR_DEFAULTS.mats.map(m => ({ ...m }));
@@ -1707,7 +1799,7 @@ if (store.get("tab", "calc") === "pricing") renderSale();
     $("q-parts").innerHTML = Q.parts.map((p, i) => `<div class="qp" data-i="${i}">
       <label class="nmi">Part ${i + 1}<input class="plain" data-k="n" maxlength="50" placeholder="e.g. Base plate" value="${esc(p.n)}"></label>
       <label>Grams each<input class="plain" data-k="g" inputmode="decimal" placeholder="0" value="${esc(p.g)}"></label>
-      <label>Print hours each<input class="plain" data-k="hr" inputmode="decimal" placeholder="e.g. 2.5" value="${esc(p.hr)}"></label>
+      <label>Hours each<input class="plain" data-k="hr" inputmode="decimal" placeholder="e.g. 2.5" value="${esc(p.hr)}"></label>
       <label>Per unit<input class="plain" data-k="q" inputmode="numeric" value="${esc(p.q)}"></label>
       <button type="button" class="x" data-rm="${i}" aria-label="Remove part ${i + 1}"${Q.parts.length < 2 ? " hidden" : ""}>×</button></div>`).join("");
   }
@@ -1742,7 +1834,8 @@ if (store.get("tab", "calc") === "pricing") renderSale();
     const hasWork = c.grams > 0 || c.printHrs > 0 || c.extras > 0 || c.design > 0 || c.finish > 0;
     if (!hasWork) {
       $("q-result").innerHTML = `<p class="empty">Add a part with its grams and print time to get a price.</p>`;
-      $("q-mine").innerHTML = ""; $("q-bd").innerHTML = ""; $("q-breaks").innerHTML = ""; $("q-text").value = ""; return;
+      $("q-mine").innerHTML = ""; $("q-bd").innerHTML = ""; $("q-breaks").innerHTML = ""; $("q-text").value = "";
+      $("q-bar").innerHTML = `<span>Add a part to see the price</span>`; return;
     }
     $("q-price").placeholder = Number.isFinite(c.suggested) ? c.suggested.toFixed(2) + " (suggested)" : "suggested";
     if (!Number.isFinite(c.suggested)) {
@@ -1784,6 +1877,10 @@ if (store.get("tab", "calc") === "pricing") renderSale();
       `</div><p class="hint" style="margin:0">Design time is charged once, so each unit gets cheaper as the order grows.</p>` : "";
 
     $("q-text").value = quoteText(c, P, br);
+    if (Number.isFinite(P)) {
+      const ob = outcome(c, P);
+      $("q-bar").innerHTML = `<span>${String(Q.price).trim() !== "" ? "Your price" : "Suggested"} <b>${money(P)}</b></span><span class="${ob.profit >= 0 ? "good" : "bad"}">${money(ob.profit)} profit ›</span>`;
+    } else $("q-bar").innerHTML = `<span>Lower the margin to get a price</span>`;
   }
 
   function quoteText(c, P, br) {
@@ -1810,7 +1907,7 @@ if (store.get("tab", "calc") === "pricing") renderSale();
   /* ---- saved quotes ---- */
   function saveQuotes() { store.set("quotes", quotes); }
   function renderSaved() {
-    if (!quotes.length) { $("q-saved").innerHTML = `<p class="empty">No saved quotes yet.</p>`; return; }
+    if (!quotes.length) { $("q-saved").innerHTML = `<p class="empty">No quotes yet. Tap <b>+ New quote</b> to price a custom job.</p>`; return; }
     $("q-saved").innerHTML = quotes.slice().sort((a, b) => b.at - a.at).map(s => {
       const d = new Date(s.at).toLocaleDateString([], { month: "short", day: "numeric" });
       return `<div class="qsv" data-id="${s.id}"><span class="t">${esc(s.q.name || "Untitled job")}<small>${s.q.cust ? esc(s.q.cust) + " · " : ""}${d} · ${s.N} unit${s.N === 1 ? "" : "s"} · you keep ${money(s.pocket != null ? s.pocket : s.profit)}</small></span>
@@ -1834,11 +1931,11 @@ if (store.get("tab", "calc") === "pricing") renderSale();
     if (i >= 0) { rec.status = quotes[i].status; rec.logged = quotes[i].logged; rec.at = quotes[i].at; quotes[i] = rec; } else quotes.push(rec);
     editingId = rec.id; store.set("quoteEditing", editingId);
     saveQuotes(); renderSaved();
-    msg($("q-msg"), i >= 0 ? "Quote updated ✓" : "Quote saved ✓", true);
+    msg($("q-msg"), (i >= 0 ? "Quote updated ✓" : "Quote saved ✓") + " It's in your Quotes list.", true);
   });
   $("q-new").addEventListener("click", () => {
-    Q = blank(); Q.margin = costs.target || 40; Q.mat = (QR.mats.find(m => m.fav) || QR.mats[0]).id; editingId = null; store.set("quoteEditing", null);
-    fillForm(); render(); $("q-msg").hidden = true; window.scrollTo(0, 0);
+    Q = freshQuote(); editingId = null; store.set("quoteEditing", null);
+    fillForm(); render(); $("q-msg").hidden = true; showQView("edit"); showStep(1);
   });
   $("q-saved").addEventListener("change", e => {
     if (!e.target.matches("[data-status]")) return;
@@ -1850,7 +1947,7 @@ if (store.get("tab", "calc") === "pricing") renderSale();
     const s = quotes.find(x => x.id === card.dataset.id); if (!s) return;
     if (e.target.closest("[data-open]")) {
       Q = upgrade({ ...blank(), ...JSON.parse(JSON.stringify(s.q)) }); Q.mat = matId(Q.mat); editingId = s.id; store.set("quoteEditing", editingId);
-      fillForm(); render(); window.scrollTo(0, 0); return;
+      fillForm(); render(); $("q-msg").hidden = true; showQView("edit"); showStep(3); return;
     }
     if (e.target.closest("[data-qdel]")) {
       const b = e.target.closest("[data-qdel]");
@@ -1878,16 +1975,16 @@ if (store.get("tab", "calc") === "pricing") renderSale();
   /* ---- rates ---- */
   function renderRates() {
     $("q-mats").innerHTML = `<h2>Your filaments · price per kg</h2><p class="hint" style="margin:0">Tap ☆ to favorite: favorites go to the top of the list, and new quotes start with your first one. Tap a name or price to change it. Tap × twice to delete.</p>` + QR.mats.map((m, i) => `<div class="qmat" data-mi="${i}"><button type="button" class="star${m.fav ? " on" : ""}" data-fav="${i}" aria-pressed="${!!m.fav}" aria-label="Favorite ${esc(m.n)}">${m.fav ? "★" : "☆"}</button><input class="plain" data-mk="n" maxlength="40" value="${esc(m.n)}" aria-label="Filament name"><div class="money"><input inputmode="decimal" data-mk="kg" value="${m.kg.toFixed(2)}" aria-label="Price per kg"></div><button type="button" class="x" data-mdel="${i}" aria-label="Remove ${esc(m.n)}"${QR.mats.length < 2 ? " hidden" : ""}>×</button></div>`).join("");
-    const set = { "qr-machine": QR.machine, "qr-fail": QR.fail, "qr-design": QR.design, "qr-labor": QR.labor, "qr-min": QR.min, "qr-ppp": QR.ppp, "qr-ppf": QR.ppf };
+    const set = { "qr-machine": QR.machine, "qr-fail": QR.fail, "qr-design": QR.design, "qr-labor": QR.labor, "qr-min": QR.min, "qr-margin": QR.margin, "qr-ppp": QR.ppp, "qr-ppf": QR.ppf };
     for (const [id, v] of Object.entries(set)) $(id).value = v;
     $("qr-round").value = String(QR.round);
   }
   function readRates() {
     QR.machine = num($("qr-machine").value); QR.fail = num($("qr-fail").value); QR.design = num($("qr-design").value); QR.labor = num($("qr-labor").value);
-    QR.min = num($("qr-min").value); QR.ppp = num($("qr-ppp").value); QR.ppf = num($("qr-ppf").value); QR.round = $("qr-round").value;
+    QR.min = num($("qr-min").value); QR.margin = num($("qr-margin").value); QR.ppp = num($("qr-ppp").value); QR.ppf = num($("qr-ppf").value); QR.round = $("qr-round").value;
     store.set("quoteRates", QR);
   }
-  ["qr-machine", "qr-fail", "qr-design", "qr-labor", "qr-min", "qr-ppp", "qr-ppf", "qr-round"].forEach(id => $(id).addEventListener("input", () => { readRates(); render(); }));
+  ["qr-machine", "qr-fail", "qr-design", "qr-labor", "qr-min", "qr-margin", "qr-ppp", "qr-ppf", "qr-round"].forEach(id => $(id).addEventListener("input", () => { readRates(); render(); }));
   $("q-mats").addEventListener("input", e => {
     const row = e.target.closest("[data-mi]"); if (!row) return;
     const m = QR.mats[Number(row.dataset.mi)];
@@ -1960,15 +2057,48 @@ if (store.get("tab", "calc") === "pricing") renderSale();
     $("q-share").addEventListener("click", () => { const t = $("q-text").value; if (t) navigator.share({ text: t }).catch(() => {}); });
   }
 
+  /* ---- screens: quote list, and one quote in three steps ---- */
+  function freshQuote() {
+    const q = blank();
+    q.margin = QR.margin || 40; q.mat = (QR.mats.find(m => m.fav) || QR.mats[0]).id;
+    q.ship = (shipCfg.flatCents / 100).toFixed(2);
+    return q;
+  }
+  let qview = store.get("qview", "list"), qstep = store.get("qstep", 1);
+  function showQView(v) {
+    qview = v; store.set("qview", v);
+    $("q-listview").hidden = v !== "list"; $("q-editview").hidden = v !== "edit";
+    if (v === "list") renderSaved();
+    document.body.classList.toggle("has-bar", v === "edit" && qstep < 3 && store.get("tab", "calc") === "quotes");
+    window.scrollTo(0, 0);
+  }
+  function showStep(n) {
+    qstep = Math.min(3, Math.max(1, Number(n) || 1)); store.set("qstep", qstep);
+    document.querySelectorAll("[data-qstep]").forEach(el => { el.hidden = Number(el.dataset.qstep) !== qstep; });
+    document.querySelectorAll("#q-steps [data-step]").forEach(b => {
+      const k = Number(b.dataset.step); b.classList.toggle("on", k === qstep); b.classList.toggle("done", k < qstep);
+      if (k === qstep) b.setAttribute("aria-current", "step"); else b.removeAttribute("aria-current");
+    });
+    $("q-bar").hidden = qstep === 3;
+    document.body.classList.toggle("has-bar", qview === "edit" && qstep < 3);
+    window.scrollTo(0, 0);
+  }
+  $("q-editview").addEventListener("click", e => { const b = e.target.closest("[data-step]"); if (b) showStep(b.dataset.step); });
+  $("q-bar").addEventListener("click", () => showStep(3));
+  $("q-bar").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); showStep(3); } });
+  $("q-back").addEventListener("click", () => { readForm(); showQView("list"); });
+  // leaving the Quotes tab hides the price bar
+  $("tabs").addEventListener("click", () => setTimeout(() => document.body.classList.toggle("has-bar", store.get("tab") === "quotes" && qview === "edit" && qstep < 3), 0));
+
   let ready = false;
   window.renderQuote = () => {
     if (!ready) {
       ready = true;
-      if (Q.ship === "" && !store.get("quoteDraft", null)) Q.ship = (shipCfg.flatCents / 100).toFixed(2);
-      if (!store.get("quoteDraft", null)) Q.margin = costs.target || 40;
+      if (!store.get("quoteDraft", null)) Q = freshQuote();
       renderRates(); fillForm();
     }
     render(); renderSaved();
+    showQView(qview); if (qview === "edit") showStep(qstep);
   };
   const prev = window.onCostsChanged;
   window.onCostsChanged = () => { if (prev) prev(); if (ready && store.get("tab", "calc") === "quotes") render(); };
