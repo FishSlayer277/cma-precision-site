@@ -50,6 +50,25 @@ export async function onRequestPost({ request, env }) {
 
   const manual = (await env.SETTINGS.get("manualSales", "json")) || [];
 
+  if (body.action === "add" && body.sale && body.sale.channel === "custom") {
+    // a custom job from the Quotes tab: one line with its own cost and payment fees
+    const s = body.sale;
+    const name = clean(s.name, 80), qty = Number(s.qty);
+    if (!name) return json(400, { error: "Give the custom job a name." });
+    if (!Number.isInteger(qty) || qty < 1 || qty > 9999) return json(400, { error: "Check the number of units." });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s.date || "")) return json(400, { error: "Pick the date of the sale." });
+    const sale = {
+      id: "C" + Date.now().toString(36).toUpperCase(), channel: "custom", date: s.date,
+      items: [{ pid: null, name, qty, unit: cents(s.unit) }],
+      shipping: cents(s.shipping), discount: 0,
+      costCents: cents(s.costCents), feesCents: cents(s.feesCents), note: clean(s.note, 120)
+    };
+    if (manual.length >= 5000) return json(400, { error: "The sales log is full (5,000 entries)." });
+    manual.push(sale);
+    await env.SETTINGS.put("manualSales", JSON.stringify(manual));
+    return json(200, { ok: true, sale }, { "Cache-Control": "no-store" });
+  }
+
   if (body.action === "add") {
     const s = body.sale || {};
     const items = (Array.isArray(s.items) ? s.items : [])

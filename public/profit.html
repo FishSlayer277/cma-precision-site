@@ -130,7 +130,7 @@ details.costs .inner { display: grid; gap: 12px; margin-top: 12px; }
 .ord .amt small { display: block; font-size: 12px; }
 .ord.refunded { opacity: .5; } .ord.refunded .top { text-decoration: line-through; }
 .badge { display: inline-block; font: 600 10.5px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; margin-right: 6px; vertical-align: 1px; }
-.b-web { background: var(--red-soft); color: var(--red); } .b-etsy { background: rgba(224, 164, 58, .16); color: var(--warn); } .b-other { background: var(--raise); color: var(--muted); }
+.b-web { background: var(--red-soft); color: var(--red); } .b-etsy { background: rgba(224, 164, 58, .16); color: var(--warn); } .b-other { background: var(--raise); color: var(--muted); } .b-cust { background: rgba(73, 184, 119, .16); color: var(--good); }
 .del { background: none; border: 0; color: var(--muted); text-decoration: underline; font-size: 12.5px; cursor: pointer; padding: 0; justify-self: start; }
 .addsale { display: grid; gap: 12px; border: 1px dashed var(--line); border-radius: 8px; padding: 12px; }
 .best { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 12px; font-size: 14px; font-variant-numeric: tabular-nums; }
@@ -241,6 +241,26 @@ details.break > summary { font-size: 15px; padding: 6px 0; color: var(--ink); fo
 .srow .nm { font-size: 14.5px; line-height: 1.25; }
 .srow .nm small, .srow small { display: block; color: var(--muted); font-size: 12.5px; font-weight: 400; }
 .srow b { font-size: 16px; }
+/* Custom quotes */
+.qp { display: grid; grid-template-columns: 1fr 1fr 1fr 30px; gap: 6px; align-items: end; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.qp .nmi { grid-column: 1 / -1; }
+.qp label { display: grid; gap: 3px; font-size: 12px; color: var(--muted); min-width: 0; }
+.qp .plain { padding: 8px; font-size: 15px; }
+.qp .x { background: none; border: 0; color: var(--muted); font-size: 22px; cursor: pointer; height: 38px; }
+.qbig { display: grid; gap: 2px; background: var(--raise); border-radius: 10px; padding: 14px; }
+.qbig .who { font: 600 11px var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.qbig .big { font: 800 36px/1.05 var(--f-body); font-variant-numeric: tabular-nums; }
+.qbig .sm { font-size: 14px; color: var(--muted); }
+.qbig .sm b { color: var(--ink); }
+.qtext { width: 100%; min-height: 190px; font: 14px/1.45 var(--f-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px; resize: vertical; }
+.qsv { padding: 10px 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; }
+.qsv:last-child { border-bottom: 0; }
+.qsv .t { font-size: 15px; font-weight: 600; } .qsv .t small { display: block; font-weight: 400; font-size: 12.5px; color: var(--muted); }
+.qsv .amt { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+.qsv .row { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.qsv select { width: auto; padding: 6px 8px; font-size: 14px; }
+.qsv .del { font-size: 13px; }
+.st-quoted { color: var(--warn); } .st-accepted { color: var(--good); } .st-done { color: var(--muted); }
 </style>
 </head>
 <body>
@@ -261,6 +281,7 @@ details.break > summary { font-size: 15px; padding: 6px 0; color: var(--ink); fo
   <!-- MORE (menu) -->
   <div class="panel" data-panel="more" hidden>
     <div class="menu">
+      <button type="button" class="mi" data-go="quotes"><b>Custom quotes</b><span>Price a custom job and send the customer a quote</span></button>
       <button type="button" class="mi" data-go="costs"><b>Costs</b><span>Product costs, packaging, label, fees</span></button>
       <button type="button" class="mi" data-go="bundles"><b>Bundles</b><span>Build a kit and see what it earns</span></button>
       <button type="button" class="mi" data-go="hours"><b>Print time</b><span>Which product earns the most per printer hour</span></button>
@@ -484,6 +505,93 @@ details.break > summary { font-size: 15px; padding: 6px 0; color: var(--ink); fo
       <h2>Print time per piece</h2>
       <p class="hint">Minutes of printer time for ONE piece. If a plate prints 4 at once in 2 hours, that's 30 minutes each.</p>
       <div id="ptimes"></div>
+    </section>
+  </div>
+
+  <!-- CUSTOM QUOTES -->
+  <div class="panel" data-panel="quotes" hidden>
+    <button type="button" class="back" data-go="more">← More</button>
+    <section class="card">
+      <h2>Custom quote</h2>
+      <p class="hint">For jobs that aren't in your shop. Add each printed part, your time, and extras. The app works out a price that hits your margin, after your costs, your time and the payment fees.</p>
+      <div class="row2">
+        <label class="f">Job name<input type="text" id="q-name" class="plain" maxlength="80" placeholder="e.g. Custom die rack, 8 hole"></label>
+        <label class="f">Customer<small>optional</small><input type="text" id="q-cust" class="plain" maxlength="60" placeholder="First name"></label>
+      </div>
+      <label class="f">Material<select id="q-mat" class="plain"></select></label>
+      <div id="q-parts"></div>
+      <button class="ghost" id="q-addpart" type="button">+ Add a part</button>
+      <div class="row2">
+        <label class="f">Units ordered<input id="q-n" class="plain" inputmode="numeric" value="1"></label>
+        <label class="f">Extras per unit<small>magnets, inserts, screws</small><div class="money"><input id="q-hw" inputmode="decimal" placeholder="0.00"></div></label>
+      </div>
+      <div class="row2">
+        <label class="f">Design / modeling time<small>hours, one time</small><input id="q-design" class="plain" inputmode="decimal" placeholder="0"></label>
+        <label class="f">Cleanup / assembly<small>minutes per unit</small><input id="q-finish" class="plain" inputmode="decimal" placeholder="0"></label>
+      </div>
+      <div class="row2">
+        <label class="f">Shipping you charge<small>0 for pickup</small><div class="money"><input id="q-ship" inputmode="decimal"></div></label>
+        <label class="f">How they'll pay<select id="q-pay" class="plain">
+          <option value="website">Card (website / Stripe)</option><option value="paypal">PayPal</option><option value="etsy">Etsy custom listing</option><option value="cash">Cash / Venmo friends</option>
+        </select></label>
+      </div>
+      <label class="chk"><input type="checkbox" id="q-shipped" checked> I'm shipping it (count packaging + label)</label>
+      <label class="f">Target profit margin<div class="pct"><input id="q-margin" inputmode="decimal"></div></label>
+    </section>
+
+    <section class="card" aria-live="polite">
+      <h2>Your quote</h2>
+      <div id="q-result"></div>
+      <label class="f">Price you'll quote<small>Leave empty to use the suggested price</small><div class="money"><input id="q-price" inputmode="decimal" placeholder="suggested"></div></label>
+      <div id="q-mine"></div>
+      <details class="break"><summary>Show the full breakdown</summary><div id="q-bd"></div></details>
+      <div id="q-breaks"></div>
+    </section>
+
+    <section class="card">
+      <h2>Message for the customer</h2>
+      <div class="row2">
+        <label class="f">Ready in<small>business days after they say yes</small><input id="q-lead" class="plain" inputmode="numeric"></label>
+        <label class="f">Quote good for<small>days</small><input id="q-valid" class="plain" inputmode="numeric"></label>
+      </div>
+      <label class="chk"><input type="checkbox" id="q-showbreaks"> Include bigger-order prices</label>
+      <textarea id="q-text" class="qtext" aria-label="Quote message"></textarea>
+      <div class="actions"><button class="btn" id="q-copy" type="button">Copy message</button><button class="ghost" id="q-share" type="button" hidden>Share…</button></div>
+      <div class="actions"><button class="btn" id="q-save" type="button">Save quote</button><button class="ghost" id="q-new" type="button">New quote</button></div>
+      <p class="msg" id="q-msg" hidden></p>
+    </section>
+
+    <section class="card">
+      <h2>Saved quotes</h2>
+      <p class="hint">Saved on this phone. When a customer pays, tap “Log as sale” so it counts in your Sales totals.</p>
+      <div id="q-saved"></div>
+    </section>
+
+    <section class="card">
+      <details class="costs">
+        <summary><h2>Quote rates</h2></summary>
+        <div class="inner2">
+          <p class="hint tip">Used for every quote. Your time is counted as a cost, so the profit shown is on top of paying yourself.</p>
+          <div id="q-mats"></div>
+          <div class="row2">
+            <label class="f">Printer cost per hour<small>power + wear + nozzles</small><div class="money"><input id="qr-machine" inputmode="decimal"></div></label>
+            <label class="f">Failed-print allowance<small>extra filament + time</small><div class="pct"><input id="qr-fail" inputmode="decimal"></div></label>
+          </div>
+          <div class="row2">
+            <label class="f">Your design rate<small>per hour</small><div class="money"><input id="qr-design" inputmode="decimal"></div></label>
+            <label class="f">Your shop rate<small>cleanup, assembly, per hour</small><div class="money"><input id="qr-labor" inputmode="decimal"></div></label>
+          </div>
+          <div class="row2">
+            <label class="f">Minimum order<small>smallest total you'll quote</small><div class="money"><input id="qr-min" inputmode="decimal"></div></label>
+            <label class="f">Round prices up to<select id="qr-round" class="plain"><option value="0.25">$0.25</option><option value="0.5">$0.50</option><option value="1">$1</option><option value="5">$5</option></select></label>
+          </div>
+          <div class="row2">
+            <label class="f">PayPal percent<div class="pct"><input id="qr-ppp" inputmode="decimal"></div></label>
+            <label class="f">PayPal per payment<div class="money"><input id="qr-ppf" inputmode="decimal"></div></label>
+          </div>
+          <button class="ghost" id="qr-reset" type="button">Reset quote rates</button>
+        </div>
+      </details>
     </section>
   </div>
 
@@ -715,8 +823,8 @@ const esc = t => String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g,
 const pct = n => (Number.isFinite(n) ? n.toFixed(1) : "–") + "%";
 
 /* ---------- tabs ---------- */
-const TABS = ["calc", "sales", "pricing", "more", "bundles", "hours", "costs"];
-const UNDER_MORE = ["bundles", "hours", "costs"];
+const TABS = ["calc", "sales", "pricing", "more", "bundles", "hours", "costs", "quotes"];
+const UNDER_MORE = ["bundles", "hours", "costs", "quotes"];
 function showTool(name) {
   // Pricing tab: show the menu, or exactly one tool
   $("pr-menu").hidden = !!name;
@@ -736,6 +844,7 @@ function showTab(t, keepTool) {
   if (t === "hours") renderHours();
   if (t === "bundles" && window.renderBundles) window.renderBundles();
   if (t === "costs" && window.renderFil) window.renderFil();
+  if (t === "quotes" && window.renderQuote) window.renderQuote();
   window.scrollTo(0, 0);
 }
 $("tabs").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if (b) showTab(b.dataset.tab); });
@@ -875,6 +984,10 @@ async function openSales(force) {
 window.addEventListener("cma-unlocked", () => { if (store.get("tab", "calc") === "sales") openSales(); });
 
 function orderMoney(o) {
+  if (o.channel === "custom") {
+    const gross = o.items.reduce((t, i) => t + i.unit * i.qty, 0) / 100 + (o.shipping || 0) / 100;
+    return { gross, profit: gross - (o.feesCents || 0) / 100 - (o.costCents || 0) / 100, units: o.items.reduce((t, i) => t + i.qty, 0) };
+  }
   const items = o.items.reduce((t, i) => t + i.unit * i.qty, 0) / 100;
   const units = o.items.reduce((t, i) => t + i.qty, 0);
   const ship = (o.shipping || 0) / 100, disc = (o.discount || 0) / 100;
@@ -905,7 +1018,7 @@ function renderSales() {
   const all = [...(sales.website || []), ...(sales.manual || []).map(m => ({ ...m, manual: true }))].sort((a, b) => (b.date + b.id).localeCompare(a.date + a.id));
   const list = all.filter(o => inPeriod(o.date));
   const live = list.filter(o => !o.refunded);
-  const tot = { n: 0, gross: 0, profit: 0 }, by = { website: { n: 0, gross: 0, profit: 0 }, etsy: { n: 0, gross: 0, profit: 0 }, other: { n: 0, gross: 0, profit: 0 } };
+  const tot = { n: 0, gross: 0, profit: 0 }, by = { website: { n: 0, gross: 0, profit: 0 }, etsy: { n: 0, gross: 0, profit: 0 }, other: { n: 0, gross: 0, profit: 0 }, custom: { n: 0, gross: 0, profit: 0 } };
   const best = {};
   live.forEach(o => {
     const m = orderMoney(o);
@@ -917,7 +1030,7 @@ function renderSales() {
   $("kpis").innerHTML = [["Orders", tot.n], ["Revenue", money(tot.gross)], ["Profit", `<span class="${tot.profit >= 0 ? "good" : "bad"}">${money(tot.profit)}</span>`], ["Margin", pct(margin)]]
     .map(([k, v]) => `<div class="kpi"><span>${k}</span><b>${v}</b></div>`).join("");
   const line = (lbl, b) => b.n ? `<div><b>${lbl}:</b> ${b.n} order${b.n === 1 ? "" : "s"} · ${money(b.gross)} revenue · ${money(b.profit)} profit · avg order ${money(b.gross / b.n)}</div>` : "";
-  $("split").innerHTML = line("Website", by.website) + line("Etsy", by.etsy) + line("Other", by.other) || `<div>No sales in this period yet.</div>`;
+  $("split").innerHTML = line("Website", by.website) + line("Etsy", by.etsy) + line("Custom jobs", by.custom) + line("Other", by.other) || `<div>No sales in this period yet.</div>`;
   $("salesnote").textContent = (sales.stripeError ? "Couldn't load website orders from Stripe: " + sales.stripeError + " " : "") +
     "Website orders come from Stripe automatically. Profit uses the costs on your Costs tab. Refunded orders aren't counted.";
   const bl = Object.values(best).sort((a, b) => b.units - a.units).slice(0, 8);
@@ -926,7 +1039,7 @@ function renderSales() {
   const shown = showAll ? list : list.slice(0, 40);
   $("orders").innerHTML = shown.length ? `<div class="olist">` + shown.map(o => {
     const m = orderMoney(o);
-    const badge = o.channel === "website" ? `<span class="badge b-web">Web</span>` : o.channel === "etsy" ? `<span class="badge b-etsy">Etsy</span>` : `<span class="badge b-other">Other</span>`;
+    const badge = o.channel === "website" ? `<span class="badge b-web">Web</span>` : o.channel === "etsy" ? `<span class="badge b-etsy">Etsy</span>` : o.channel === "custom" ? `<span class="badge b-cust">Custom</span>` : `<span class="badge b-other">Other</span>`;
     const items = o.items.map(i => `${i.qty}× ${esc(i.name)}`).join(", ");
     const d = new Date(o.date + "T12:00:00").toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
     return `<div class="ord${o.refunded ? " refunded" : ""}" data-id="${esc(o.id)}"><span class="top">${badge}${d}${o.refunded ? " · refunded" : ""}</span>
@@ -1487,6 +1600,312 @@ $("sd-mode").addEventListener("change", () => {
 
 window.renderSale = renderSale;
 if (store.get("tab", "calc") === "pricing") renderSale();
+</script>
+
+<script>
+/* ===================== Custom quotes ===================== */
+(function () {
+  const QR_DEFAULTS = {
+    mats: [{ n: "PLA", kg: 18 }, { n: "PLA Silk / Matte", kg: 22 }, { n: "PETG", kg: 20 }, { n: "ABS / ASA", kg: 24 }, { n: "TPU", kg: 30 }, { n: "Carbon fiber nylon", kg: 60 }],
+    machine: 0.50, fail: 10, design: 30, labor: 20, min: 15, round: "1", ppp: 3.49, ppf: 0.49
+  };
+  const QR = { ...QR_DEFAULTS, ...store.get("quoteRates", {}) };
+  if (!Array.isArray(QR.mats) || !QR.mats.length) QR.mats = QR_DEFAULTS.mats.map(m => ({ ...m }));
+  const blank = () => ({ name: "", cust: "", mat: 0, parts: [{ n: "", g: "", min: "", q: 1 }], n: 1, hw: "", design: "", finish: "", ship: "", pay: "website", shipped: true, margin: 40, price: "", lead: 7, valid: 14, showBreaks: false });
+  let Q = { ...blank(), ...store.get("quoteDraft", {}) };
+  let quotes = store.get("quotes", []);
+  let editingId = store.get("quoteEditing", null);
+  const roundUp = (v, step) => Math.ceil(v / step - 1e-9) * step;
+  const step = () => num(QR.round) || 1;
+
+  /* ---- fees for each way of paying, on what the buyer pays (price + shipping) ---- */
+  function feeModel(pay) {
+    if (pay === "website") return { r: costs.sPct / 100, f: costs.sFix, label: "Card fee (Stripe)" };
+    if (pay === "paypal") return { r: QR.ppp / 100, f: QR.ppf, label: "PayPal fee" };
+    if (pay === "etsy") return { r: (costs.eTx + costs.ePp) / 100, f: costs.ePf + costs.eList, label: "Etsy fees" };
+    return { r: 0, f: 0, label: "Payment fees" };
+  }
+
+  /* ---- the math ---- */
+  function compute(q, units) {
+    const N = Math.max(1, Math.round(units != null ? units : num(q.n)) || 1);
+    const mat = QR.mats[q.mat] || QR.mats[0];
+    const grams = q.parts.reduce((t, p) => t + num(p.g) * Math.max(0, num(p.q)), 0);       // per unit
+    const mins = q.parts.reduce((t, p) => t + num(p.min) * Math.max(0, num(p.q)), 0);      // per unit
+    const fail = 1 + Math.max(0, QR.fail) / 100;
+    const filament = grams / 1000 * mat.kg * fail * N;
+    const printHrs = mins / 60 * N;
+    const machine = printHrs * QR.machine * fail;
+    const extras = num(q.hw) * N;
+    const designHrs = num(q.design), finishHrs = num(q.finish) / 60 * N;
+    const design = designHrs * QR.design, finish = finishHrs * QR.labor;
+    const packLabel = q.shipped ? costs.pack + costs.label : 0;
+    const cash = filament + machine + extras + packLabel;       // money that leaves your pocket
+    const time = design + finish;                               // paying yourself
+    const all = cash + time;
+    const S = num(q.ship);
+    const fm = feeModel(q.pay);
+    const m = Math.min(90, Math.max(0, num(q.margin))) / 100;
+    const den = 1 - fm.r - m;
+    // price P where (P+S) - fees - all = m (P+S)  →  P = (all + f) / (1 - r - m) - S
+    let suggested = den > 0 ? (all + fm.f) / den - S : NaN;
+    const breakEven = (all + fm.f) / (1 - fm.r) - S;
+    if (Number.isFinite(suggested)) suggested = Math.max(suggested, QR.min - S, 0);
+    suggested = Number.isFinite(suggested) ? roundUp(suggested, step()) : NaN;
+    return { N, mat, grams, mins, filament, machine, extras, design, finish, designHrs, finishHrs, printHrs, packLabel, cash, time, all, S, fm, m, suggested, breakEven };
+  }
+  function outcome(c, P) {
+    const G = P + c.S, fees = G > 0 && c.fm.r + c.fm.f > 0 ? G * c.fm.r + c.fm.f : 0;
+    const profit = G - fees - c.all;
+    return { P, G, fees, profit, margin: G > 0 ? profit / G * 100 : NaN, pocket: profit + c.time, perHr: c.printHrs > 0 ? (profit + c.time) / c.printHrs : NaN };
+  }
+  const quotedPrice = c => (String(Q.price).trim() !== "" ? num(Q.price) : c.suggested);
+
+  /* ---- rendering ---- */
+  function renderMatSelect() {
+    $("q-mat").innerHTML = QR.mats.map((m, i) => `<option value="${i}">${esc(m.n)} · $${m.kg.toFixed(2)}/kg</option>`).join("");
+    $("q-mat").value = String(Math.min(Q.mat, QR.mats.length - 1));
+  }
+  function renderParts() {
+    $("q-parts").innerHTML = Q.parts.map((p, i) => `<div class="qp" data-i="${i}">
+      <label class="nmi">Part ${i + 1}<input class="plain" data-k="n" maxlength="50" placeholder="e.g. Base plate" value="${esc(p.n)}"></label>
+      <label>Grams each<input class="plain" data-k="g" inputmode="decimal" placeholder="0" value="${esc(p.g)}"></label>
+      <label>Minutes each<input class="plain" data-k="min" inputmode="decimal" placeholder="0" value="${esc(p.min)}"></label>
+      <label>Per unit<input class="plain" data-k="q" inputmode="numeric" value="${esc(p.q)}"></label>
+      <button type="button" class="x" data-rm="${i}" aria-label="Remove part ${i + 1}"${Q.parts.length < 2 ? " hidden" : ""}>×</button></div>`).join("");
+  }
+  function fillForm() {
+    renderMatSelect(); renderParts();
+    const set = (id, v) => { $(id).value = v == null ? "" : v; };
+    set("q-name", Q.name); set("q-cust", Q.cust); set("q-n", Q.n); set("q-hw", Q.hw); set("q-design", Q.design); set("q-finish", Q.finish);
+    set("q-ship", Q.ship); set("q-pay", Q.pay); set("q-margin", Q.margin); set("q-price", Q.price); set("q-lead", Q.lead); set("q-valid", Q.valid);
+    $("q-shipped").checked = !!Q.shipped; $("q-showbreaks").checked = !!Q.showBreaks;
+  }
+  function readForm() {
+    Q.name = $("q-name").value; Q.cust = $("q-cust").value; Q.mat = Number($("q-mat").value) || 0; Q.n = $("q-n").value;
+    Q.hw = $("q-hw").value; Q.design = $("q-design").value; Q.finish = $("q-finish").value; Q.ship = $("q-ship").value;
+    Q.pay = $("q-pay").value; Q.margin = $("q-margin").value; Q.price = $("q-price").value; Q.lead = $("q-lead").value; Q.valid = $("q-valid").value;
+    Q.shipped = $("q-shipped").checked; Q.showBreaks = $("q-showbreaks").checked;
+    store.set("quoteDraft", Q);
+  }
+  const hm = h => { const t = Math.round(h * 60); return t < 60 ? `${t} min` : `${Math.floor(t / 60)} h${t % 60 ? " " + (t % 60) + " min" : ""}`; };
+
+  function breaks(c) {
+    const set = [...new Set([1, 5, 10, 25, c.N])].sort((a, b) => a - b);
+    return set.map(n => {
+      const cc = compute(Q, n);
+      const each = Number.isFinite(cc.suggested) ? roundUp(cc.suggested / n, 0.25) : NaN;
+      return { n, each, total: each * n };
+    });
+  }
+
+  function render() {
+    readForm();
+    const c = compute(Q);
+    const hasWork = c.grams > 0 || c.mins > 0 || c.extras > 0 || c.design > 0 || c.finish > 0;
+    if (!hasWork) {
+      $("q-result").innerHTML = `<p class="empty">Add a part with its grams and print time to get a price.</p>`;
+      $("q-mine").innerHTML = ""; $("q-bd").innerHTML = ""; $("q-breaks").innerHTML = ""; $("q-text").value = ""; return;
+    }
+    $("q-price").placeholder = Number.isFinite(c.suggested) ? c.suggested.toFixed(2) + " (suggested)" : "suggested";
+    if (!Number.isFinite(c.suggested)) {
+      $("q-result").innerHTML = `<div class="lossbar">A ${(c.m * 100).toFixed(0)}% margin isn't possible after ${c.fm.label.toLowerCase()}. Lower the target margin.</div>`;
+    } else {
+      const o = outcome(c, c.suggested);
+      $("q-result").innerHTML = `<div class="qbig"><span class="who">Suggested price${c.N > 1 ? ` · ${c.N} units` : ""}</span>
+        <span class="big">${money(c.suggested)}</span>
+        <span class="sm">${c.N > 1 ? `${money(c.suggested / c.N)} each · ` : ""}${c.S ? `plus ${money(c.S)} shipping · ` : ""}profit <b>${money(o.profit)}</b> (${pct(o.margin)})</span>
+        <span class="sm">Don't go below <b>${money(Math.max(0, roundUp(c.breakEven, 0.25)))}</b>: that only covers costs and your time.</span></div>`;
+    }
+    const P = quotedPrice(c);
+    if (String(Q.price).trim() !== "" && Number.isFinite(P)) {
+      const o = outcome(c, P);
+      $("q-mine").innerHTML = o.profit < 0
+        ? `<div class="lossbar">At ${money(P)} you lose ${money(-o.profit)} after paying yourself. You'd pocket ${money(o.pocket)} total for your time.</div>`
+        : `<div class="answer">At <b>${money(P)}</b>: profit <b class="good">${money(o.profit)}</b> · ${pct(o.margin)} margin. You pocket <b>${money(o.pocket)}</b> counting your time.</div>`;
+    } else $("q-mine").innerHTML = "";
+
+    const o = outcome(c, Number.isFinite(P) ? P : 0);
+    const row = (l, v, cls) => `<tr${cls ? ` class="${cls}"` : ""}><td>${l}</td><td>${v}</td></tr>`;
+    $("q-bd").innerHTML = `<table class="bd"><tbody>
+      ${row("Price", money(o.P))}${c.S ? row("Shipping charged", money(c.S)) : ""}${row("Buyer pays", money(o.G), "tot")}
+      ${row(c.fm.label, "−" + money(o.fees))}
+      ${row(`Filament: ${Math.round(c.grams * c.N)} g ${esc(c.mat.n)}${QR.fail ? ` +${QR.fail}% for fails` : ""}`, "−" + money(c.filament))}
+      ${row(`Printer time: ${hm(c.printHrs)}`, "−" + money(c.machine))}
+      ${c.extras ? row("Extras", "−" + money(c.extras)) : ""}
+      ${c.packLabel ? row("Packaging + label", "−" + money(c.packLabel)) : ""}
+      ${c.design ? row(`Your design time: ${hm(c.designHrs)}`, "−" + money(c.design)) : ""}
+      ${c.finish ? row(`Cleanup / assembly: ${hm(c.finishHrs)}`, "−" + money(c.finish)) : ""}
+      ${row("Profit", money(o.profit), "tot")}
+      ${row("Cash in your pocket (profit + your time)", money(o.pocket))}
+      ${Number.isFinite(o.perHr) ? row("Per printer hour", money(o.perHr)) : ""}
+    </tbody></table>`;
+
+    const br = breaks(c);
+    $("q-breaks").innerHTML = br.every(b => Number.isFinite(b.each)) ? `<h2 style="margin-top:4px">Price for bigger orders</h2><div class="best"><span class="h">UNITS</span><span class="h r">EACH</span><span class="h r">TOTAL</span>` +
+      br.map(b => `<span>${b.n}${b.n === c.N ? " ← this quote" : ""}</span><span class="r">${money(b.each)}</span><span class="r">${money(b.total)}</span>`).join("") +
+      `</div><p class="hint" style="margin:0">Design time is charged once, so each unit gets cheaper as the order grows.</p>` : "";
+
+    $("q-text").value = quoteText(c, P, br);
+  }
+
+  function quoteText(c, P, br) {
+    if (!Number.isFinite(P)) return "";
+    const name = Q.name.trim() || "Custom 3D-printed part";
+    const valid = Math.max(1, Math.round(num(Q.valid)) || 14);
+    const until = new Date(Date.now() + valid * 864e5).toLocaleDateString([], { month: "long", day: "numeric" });
+    const lines = [`${Q.cust.trim() ? "Hi " + Q.cust.trim() + "," : "Hi,"} here's your quote from CMA Precision:`, "", name];
+    if (c.N > 1) lines.push(`${c.N} units at ${money(roundUp(P / c.N, 0.01))} each: ${money(P)}`); else lines.push(`Price: ${money(P)}`);
+    const mat = c.mat.n.split(" /")[0];
+    lines.push(`Printed in ${mat}`);
+    if (Q.shipped) lines.push(c.S ? `Shipping: ${money(c.S)} (USPS)` : "Shipping: free"); else lines.push("Local pickup");
+    lines.push(`Total: ${money(P + c.S)}`, "");
+    if (Q.showBreaks) {
+      const other = br.filter(b => b.n !== c.N && b.n > 1);
+      if (other.length) { lines.push("Ordering more?"); other.forEach(b => lines.push(`  ${b.n} units: ${money(b.each)} each (${money(b.total)})`)); lines.push(""); }
+    }
+    const lead = Math.max(1, Math.round(num(Q.lead)) || 7);
+    lines.push(`Ready to ship about ${lead} business day${lead === 1 ? "" : "s"} after you approve${c.design ? " the design" : ""}.`);
+    lines.push(`This price is good until ${until}.`, "", "Thanks!", "John, CMA Precision", "cmaprecision.com");
+    return lines.join("\n");
+  }
+
+  /* ---- saved quotes ---- */
+  function saveQuotes() { store.set("quotes", quotes); }
+  function renderSaved() {
+    if (!quotes.length) { $("q-saved").innerHTML = `<p class="empty">No saved quotes yet.</p>`; return; }
+    $("q-saved").innerHTML = quotes.slice().sort((a, b) => b.at - a.at).map(s => {
+      const d = new Date(s.at).toLocaleDateString([], { month: "short", day: "numeric" });
+      return `<div class="qsv" data-id="${s.id}"><span class="t">${esc(s.q.name || "Untitled job")}<small>${s.q.cust ? esc(s.q.cust) + " · " : ""}${d} · ${s.N} unit${s.N === 1 ? "" : "s"} · you keep ${money(s.pocket != null ? s.pocket : s.profit)}</small></span>
+        <span class="amt">${money(s.total)}</span>
+        <span class="row">
+          <select class="plain st-${s.status}" data-status aria-label="Status"><option value="quoted"${s.status === "quoted" ? " selected" : ""}>Quoted</option><option value="accepted"${s.status === "accepted" ? " selected" : ""}>Accepted</option><option value="done"${s.status === "done" ? " selected" : ""}>Done</option></select>
+          <button class="ghost" type="button" data-open>Open</button>
+          ${s.logged ? `<small class="good">Logged in Sales ✓</small>` : `<button class="ghost" type="button" data-log>Log as sale</button>`}
+          <button class="del" type="button" data-qdel>Delete</button>
+        </span></div>`;
+    }).join("");
+  }
+  $("q-save").addEventListener("click", () => {
+    readForm();
+    const c = compute(Q), P = quotedPrice(c);
+    if (!Number.isFinite(P) || P <= 0) return msg($("q-msg"), "Add the parts first so there's a price to save.");
+    const o = outcome(c, P);
+    const rec = { id: editingId || "q" + Date.now().toString(36), at: Date.now(), status: "quoted", logged: false, q: JSON.parse(JSON.stringify(Q)),
+      N: c.N, price: P, total: P + c.S, profit: o.profit, pocket: o.pocket, fees: o.fees, cash: c.cash };
+    const i = quotes.findIndex(x => x.id === rec.id);
+    if (i >= 0) { rec.status = quotes[i].status; rec.logged = quotes[i].logged; rec.at = quotes[i].at; quotes[i] = rec; } else quotes.push(rec);
+    editingId = rec.id; store.set("quoteEditing", editingId);
+    saveQuotes(); renderSaved();
+    msg($("q-msg"), i >= 0 ? "Quote updated ✓" : "Quote saved ✓", true);
+  });
+  $("q-new").addEventListener("click", () => {
+    Q = blank(); Q.margin = costs.target || 40; editingId = null; store.set("quoteEditing", null);
+    fillForm(); render(); $("q-msg").hidden = true; window.scrollTo(0, 0);
+  });
+  $("q-saved").addEventListener("change", e => {
+    if (!e.target.matches("[data-status]")) return;
+    const s = quotes.find(x => x.id === e.target.closest(".qsv").dataset.id); if (!s) return;
+    s.status = e.target.value; saveQuotes(); renderSaved();
+  });
+  $("q-saved").addEventListener("click", async e => {
+    const card = e.target.closest(".qsv"); if (!card) return;
+    const s = quotes.find(x => x.id === card.dataset.id); if (!s) return;
+    if (e.target.closest("[data-open]")) {
+      Q = { ...blank(), ...JSON.parse(JSON.stringify(s.q)) }; editingId = s.id; store.set("quoteEditing", editingId);
+      fillForm(); render(); window.scrollTo(0, 0); return;
+    }
+    if (e.target.closest("[data-qdel]")) {
+      const b = e.target.closest("[data-qdel]");
+      if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Tap again to delete"; setTimeout(() => { if (b.isConnected) { b.dataset.confirm = ""; b.textContent = "Delete"; } }, 4000); return; }
+      quotes = quotes.filter(x => x.id !== s.id); if (editingId === s.id) { editingId = null; store.set("quoteEditing", null); }
+      saveQuotes(); renderSaved(); return;
+    }
+    const lb = e.target.closest("[data-log]");
+    if (lb) {
+      if (lb.dataset.confirm !== "1") { lb.dataset.confirm = "1"; lb.textContent = `Tap to log ${money(s.total)} today`; setTimeout(() => { if (lb.isConnected) { lb.dataset.confirm = ""; lb.textContent = "Log as sale"; } }, 5000); return; }
+      lb.disabled = true; lb.textContent = "Saving…";
+      try {
+        const shipC = Math.round(num(s.q.ship) * 100);
+        const r = await api({ action: "add", sale: {
+          channel: "custom", date: new Date().toLocaleDateString("en-CA"), name: s.q.name || "Custom job", qty: s.N,
+          unit: Math.round(s.price * 100 / s.N), shipping: shipC, costCents: Math.round(s.cash * 100), feesCents: Math.round(s.fees * 100),
+          note: (s.q.cust ? s.q.cust + " · " : "") + "custom quote"
+        } });
+        s.logged = true; if (s.status === "quoted") s.status = "accepted"; saveQuotes(); renderSaved();
+        if (sales && sales.manual) sales.manual.push(r.sale);
+      } catch (err) { lb.disabled = false; lb.textContent = err.status === 401 ? "Unlock the app first" : err.message; }
+    }
+  });
+
+  /* ---- rates ---- */
+  function renderRates() {
+    $("q-mats").innerHTML = `<h2>Filament price per kg</h2>` + QR.mats.map((m, i) => `<div class="pc" data-mi="${i}"><div class="nm"><input class="plain" data-mk="n" maxlength="30" value="${esc(m.n)}" aria-label="Material name"></div><div class="money"><input inputmode="decimal" data-mk="kg" value="${m.kg.toFixed(2)}" aria-label="Price per kg"></div></div>`).join("") +
+      `<button class="ghost" type="button" id="q-addmat" style="justify-self:start">+ Add a material</button>`;
+    const set = { "qr-machine": QR.machine, "qr-fail": QR.fail, "qr-design": QR.design, "qr-labor": QR.labor, "qr-min": QR.min, "qr-ppp": QR.ppp, "qr-ppf": QR.ppf };
+    for (const [id, v] of Object.entries(set)) $(id).value = v;
+    $("qr-round").value = String(QR.round);
+  }
+  function readRates() {
+    QR.machine = num($("qr-machine").value); QR.fail = num($("qr-fail").value); QR.design = num($("qr-design").value); QR.labor = num($("qr-labor").value);
+    QR.min = num($("qr-min").value); QR.ppp = num($("qr-ppp").value); QR.ppf = num($("qr-ppf").value); QR.round = $("qr-round").value;
+    store.set("quoteRates", QR);
+  }
+  ["qr-machine", "qr-fail", "qr-design", "qr-labor", "qr-min", "qr-ppp", "qr-ppf", "qr-round"].forEach(id => $(id).addEventListener("input", () => { readRates(); render(); }));
+  $("q-mats").addEventListener("input", e => {
+    const row = e.target.closest("[data-mi]"); if (!row) return;
+    const m = QR.mats[Number(row.dataset.mi)];
+    if (e.target.dataset.mk === "n") m.n = e.target.value || "Material"; else m.kg = Math.max(0, num(e.target.value));
+    store.set("quoteRates", QR); renderMatSelect(); render();
+  });
+  $("q-mats").addEventListener("click", e => {
+    if (e.target.id !== "q-addmat") return;
+    QR.mats.push({ n: "New material", kg: 20 }); store.set("quoteRates", QR); renderRates(); renderMatSelect();
+  });
+  $("qr-reset").addEventListener("click", () => {
+    Object.assign(QR, JSON.parse(JSON.stringify(QR_DEFAULTS))); store.set("quoteRates", QR); renderRates(); renderMatSelect(); render();
+  });
+
+  /* ---- form events ---- */
+  $("q-parts").addEventListener("input", e => {
+    const row = e.target.closest(".qp"); if (!row || !e.target.dataset.k) return;
+    Q.parts[Number(row.dataset.i)][e.target.dataset.k] = e.target.value; render();
+  });
+  $("q-parts").addEventListener("click", e => {
+    const b = e.target.closest("[data-rm]"); if (!b) return;
+    Q.parts.splice(Number(b.dataset.rm), 1); renderParts(); render();
+  });
+  $("q-addpart").addEventListener("click", () => {
+    readForm(); Q.parts.push({ n: "", g: "", min: "", q: 1 }); renderParts(); render();
+    const last = $("q-parts").querySelector(".qp:last-child input"); if (last) last.focus();
+  });
+  ["q-name", "q-cust", "q-n", "q-hw", "q-design", "q-finish", "q-ship", "q-margin", "q-price", "q-lead", "q-valid"].forEach(id => $(id).addEventListener("input", render));
+  ["q-mat", "q-pay", "q-shipped", "q-showbreaks"].forEach(id => $(id).addEventListener("change", render));
+  $("q-copy").addEventListener("click", async () => {
+    const t = $("q-text").value; if (!t) return;
+    try { await navigator.clipboard.writeText(t); }
+    catch (e) { $("q-text").select(); document.execCommand && document.execCommand("copy"); }
+    const b = $("q-copy"); b.textContent = "Copied ✓"; setTimeout(() => { b.textContent = "Copy message"; }, 1600);
+  });
+  if (navigator.share) {
+    $("q-share").hidden = false;
+    $("q-share").addEventListener("click", () => { const t = $("q-text").value; if (t) navigator.share({ text: t }).catch(() => {}); });
+  }
+
+  let ready = false;
+  window.renderQuote = () => {
+    if (!ready) {
+      ready = true;
+      if (Q.ship === "" && !store.get("quoteDraft", null)) Q.ship = (shipCfg.flatCents / 100).toFixed(2);
+      if (!store.get("quoteDraft", null)) Q.margin = costs.target || 40;
+      renderRates(); fillForm();
+    }
+    render(); renderSaved();
+  };
+  const prev = window.onCostsChanged;
+  window.onCostsChanged = () => { if (prev) prev(); if (ready && store.get("tab", "calc") === "quotes") render(); };
+  if (store.get("tab", "calc") === "quotes") window.renderQuote();
+})();
 </script>
 
 <script>
