@@ -519,7 +519,7 @@ details.break > summary { font-size: 15px; padding: 6px 0; color: var(--ink); fo
     <button type="button" class="back" data-go="more">← More</button>
     <section class="card">
       <h2>Custom quote</h2>
-      <p class="hint">For jobs that aren't in your shop. Add each printed part, your time, and extras. The app works out a price that hits your margin, after your costs, your time and the payment fees.</p>
+      <p class="hint">For jobs that aren't in your shop. Add each printed part with its print time in hours (2.5 = 2 hours 30 minutes), your time, and extras. The app works out a price that hits your margin, after your costs, your time and the payment fees.</p>
       <div class="row2">
         <label class="f">Job name<input type="text" id="q-name" class="plain" maxlength="80" placeholder="e.g. Custom die rack, 8 hole"></label>
         <label class="f">Customer<small>optional</small><input type="text" id="q-cust" class="plain" maxlength="60" placeholder="First name"></label>
@@ -545,7 +545,7 @@ details.break > summary { font-size: 15px; padding: 6px 0; color: var(--ink); fo
       </div>
       <div class="row2">
         <label class="f">Design / modeling time<small>hours, one time</small><input id="q-design" class="plain" inputmode="decimal" placeholder="0"></label>
-        <label class="f">Cleanup / assembly<small>minutes per unit</small><input id="q-finish" class="plain" inputmode="decimal" placeholder="0"></label>
+        <label class="f">Cleanup / assembly<small>hours per unit</small><input id="q-finish" class="plain" inputmode="decimal" placeholder="0"></label>
       </div>
       <div class="row2">
         <label class="f">Shipping you charge<small>0 for pickup</small><div class="money"><input id="q-ship" inputmode="decimal"></div></label>
@@ -1632,8 +1632,21 @@ if (store.get("tab", "calc") === "pricing") renderSale();
   // quotes saved before filaments had ids stored the list position instead
   const matId = v => (typeof v === "number" ? (QR.mats[v] || QR.mats[0]).id : (QR.mats.some(m => m.id === v) ? v : QR.mats[0].id));
   const matOf = v => QR.mats.find(m => m.id === matId(v)) || QR.mats[0];
-  const blank = () => ({ name: "", cust: "", mat: 0, parts: [{ n: "", g: "", min: "", q: 1 }], n: 1, hw: "", design: "", finish: "", ship: "", pay: "website", shipped: true, margin: 40, price: "", lead: 7, valid: 14, showBreaks: false });
-  let Q = { ...blank(), ...store.get("quoteDraft", {}) };
+  const blank = () => ({ name: "", cust: "", mat: 0, parts: [{ n: "", g: "", hr: "", q: 1 }], n: 1, hw: "", design: "", finishH: "", ship: "", pay: "website", shipped: true, margin: 40, price: "", lead: 7, valid: 14, showBreaks: false });
+  // hours: "2.5", "2:30" (2 h 30 min) or "2h 30m"
+  const hrs = v => {
+    const t = String(v == null ? "" : v).trim().toLowerCase();
+    let m = t.match(/^(\d*\.?\d*)\s*:\s*(\d{1,2})$/); if (m) return (num(m[1]) || 0) + num(m[2]) / 60;
+    m = t.match(/^(?:(\d*\.?\d+)\s*h\w*)?\s*(?:(\d+)\s*m\w*)?$/); if (m && (m[1] || m[2])) return (num(m[1]) || 0) + (num(m[2]) || 0) / 60;
+    return Math.max(0, num(t));
+  };
+  const toH = mins => { const h = num(mins) / 60; return h ? String(Math.round(h * 100) / 100) : ""; };
+  function upgrade(q) {
+    (q.parts || []).forEach(p => { if (p.hr === undefined) { p.hr = toH(p.min); delete p.min; } });
+    if (q.finishH === undefined) { q.finishH = toH(q.finish); delete q.finish; }
+    return q;
+  }
+  let Q = upgrade({ ...blank(), ...store.get("quoteDraft", {}) });
   Q.mat = matId(Q.mat);
   let quotes = store.get("quotes", []);
   let editingId = store.get("quoteEditing", null);
@@ -1653,13 +1666,13 @@ if (store.get("tab", "calc") === "pricing") renderSale();
     const N = Math.max(1, Math.round(units != null ? units : num(q.n)) || 1);
     const mat = matOf(q.mat);
     const grams = q.parts.reduce((t, p) => t + num(p.g) * Math.max(0, num(p.q)), 0);       // per unit
-    const mins = q.parts.reduce((t, p) => t + num(p.min) * Math.max(0, num(p.q)), 0);      // per unit
+    const unitHrs = q.parts.reduce((t, p) => t + hrs(p.hr) * Math.max(0, num(p.q)), 0);   // per unit
     const fail = 1 + Math.max(0, QR.fail) / 100;
     const filament = grams / 1000 * mat.kg * fail * N;
-    const printHrs = mins / 60 * N;
+    const printHrs = unitHrs * N;
     const machine = printHrs * QR.machine * fail;
     const extras = num(q.hw) * N;
-    const designHrs = num(q.design), finishHrs = num(q.finish) / 60 * N;
+    const designHrs = num(q.design), finishHrs = hrs(q.finishH) * N;
     const design = designHrs * QR.design, finish = finishHrs * QR.labor;
     const packLabel = q.shipped ? costs.pack + costs.label : 0;
     const cash = filament + machine + extras + packLabel;       // money that leaves your pocket
@@ -1674,7 +1687,7 @@ if (store.get("tab", "calc") === "pricing") renderSale();
     const breakEven = (all + fm.f) / (1 - fm.r) - S;
     if (Number.isFinite(suggested)) suggested = Math.max(suggested, QR.min - S, 0);
     suggested = Number.isFinite(suggested) ? roundUp(suggested, step()) : NaN;
-    return { N, mat, grams, mins, filament, machine, extras, design, finish, designHrs, finishHrs, printHrs, packLabel, cash, time, all, S, fm, m, suggested, breakEven };
+    return { N, mat, grams, unitHrs, filament, machine, extras, design, finish, designHrs, finishHrs, printHrs, packLabel, cash, time, all, S, fm, m, suggested, breakEven };
   }
   function outcome(c, P) {
     const G = P + c.S, fees = G > 0 && c.fm.r + c.fm.f > 0 ? G * c.fm.r + c.fm.f : 0;
@@ -1694,20 +1707,20 @@ if (store.get("tab", "calc") === "pricing") renderSale();
     $("q-parts").innerHTML = Q.parts.map((p, i) => `<div class="qp" data-i="${i}">
       <label class="nmi">Part ${i + 1}<input class="plain" data-k="n" maxlength="50" placeholder="e.g. Base plate" value="${esc(p.n)}"></label>
       <label>Grams each<input class="plain" data-k="g" inputmode="decimal" placeholder="0" value="${esc(p.g)}"></label>
-      <label>Minutes each<input class="plain" data-k="min" inputmode="decimal" placeholder="0" value="${esc(p.min)}"></label>
+      <label>Print hours each<input class="plain" data-k="hr" inputmode="decimal" placeholder="e.g. 2.5" value="${esc(p.hr)}"></label>
       <label>Per unit<input class="plain" data-k="q" inputmode="numeric" value="${esc(p.q)}"></label>
       <button type="button" class="x" data-rm="${i}" aria-label="Remove part ${i + 1}"${Q.parts.length < 2 ? " hidden" : ""}>×</button></div>`).join("");
   }
   function fillForm() {
     renderMatSelect(); renderParts();
     const set = (id, v) => { $(id).value = v == null ? "" : v; };
-    set("q-name", Q.name); set("q-cust", Q.cust); set("q-n", Q.n); set("q-hw", Q.hw); set("q-design", Q.design); set("q-finish", Q.finish);
+    set("q-name", Q.name); set("q-cust", Q.cust); set("q-n", Q.n); set("q-hw", Q.hw); set("q-design", Q.design); set("q-finish", Q.finishH);
     set("q-ship", Q.ship); set("q-pay", Q.pay); set("q-margin", Q.margin); set("q-price", Q.price); set("q-lead", Q.lead); set("q-valid", Q.valid);
     $("q-shipped").checked = !!Q.shipped; $("q-showbreaks").checked = !!Q.showBreaks;
   }
   function readForm() {
     Q.name = $("q-name").value; Q.cust = $("q-cust").value; Q.mat = matId($("q-mat").value); Q.n = $("q-n").value;
-    Q.hw = $("q-hw").value; Q.design = $("q-design").value; Q.finish = $("q-finish").value; Q.ship = $("q-ship").value;
+    Q.hw = $("q-hw").value; Q.design = $("q-design").value; Q.finishH = $("q-finish").value; Q.ship = $("q-ship").value;
     Q.pay = $("q-pay").value; Q.margin = $("q-margin").value; Q.price = $("q-price").value; Q.lead = $("q-lead").value; Q.valid = $("q-valid").value;
     Q.shipped = $("q-shipped").checked; Q.showBreaks = $("q-showbreaks").checked;
     store.set("quoteDraft", Q);
@@ -1726,7 +1739,7 @@ if (store.get("tab", "calc") === "pricing") renderSale();
   function render() {
     readForm();
     const c = compute(Q);
-    const hasWork = c.grams > 0 || c.mins > 0 || c.extras > 0 || c.design > 0 || c.finish > 0;
+    const hasWork = c.grams > 0 || c.printHrs > 0 || c.extras > 0 || c.design > 0 || c.finish > 0;
     if (!hasWork) {
       $("q-result").innerHTML = `<p class="empty">Add a part with its grams and print time to get a price.</p>`;
       $("q-mine").innerHTML = ""; $("q-bd").innerHTML = ""; $("q-breaks").innerHTML = ""; $("q-text").value = ""; return;
@@ -1836,7 +1849,7 @@ if (store.get("tab", "calc") === "pricing") renderSale();
     const card = e.target.closest(".qsv"); if (!card) return;
     const s = quotes.find(x => x.id === card.dataset.id); if (!s) return;
     if (e.target.closest("[data-open]")) {
-      Q = { ...blank(), ...JSON.parse(JSON.stringify(s.q)) }; Q.mat = matId(Q.mat); editingId = s.id; store.set("quoteEditing", editingId);
+      Q = upgrade({ ...blank(), ...JSON.parse(JSON.stringify(s.q)) }); Q.mat = matId(Q.mat); editingId = s.id; store.set("quoteEditing", editingId);
       fillForm(); render(); window.scrollTo(0, 0); return;
     }
     if (e.target.closest("[data-qdel]")) {
@@ -1931,7 +1944,7 @@ if (store.get("tab", "calc") === "pricing") renderSale();
     Q.parts.splice(Number(b.dataset.rm), 1); renderParts(); render();
   });
   $("q-addpart").addEventListener("click", () => {
-    readForm(); Q.parts.push({ n: "", g: "", min: "", q: 1 }); renderParts(); render();
+    readForm(); Q.parts.push({ n: "", g: "", hr: "", q: 1 }); renderParts(); render();
     const last = $("q-parts").querySelector(".qp:last-child input"); if (last) last.focus();
   });
   ["q-name", "q-cust", "q-n", "q-hw", "q-design", "q-finish", "q-ship", "q-margin", "q-price", "q-lead", "q-valid"].forEach(id => $(id).addEventListener("input", render));
