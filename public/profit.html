@@ -244,6 +244,10 @@ details.break > summary { font-size: 15px; padding: 6px 0; color: var(--ink); fo
 /* Custom quotes */
 .qp { display: grid; grid-template-columns: 1fr 1fr 1fr 30px; gap: 6px; align-items: end; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .qp .nmi { grid-column: 1 / -1; }
+.qmat { display: grid; grid-template-columns: minmax(0, 1fr) 100px 30px; gap: 6px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.qmat .plain { padding: 8px; font-size: 15px; }
+.qmat .money input { padding: 8px 6px; font-size: 15px; }
+.qmat .x { background: none; border: 0; color: var(--muted); font-size: 22px; cursor: pointer; padding: 0; }
 .qp label { display: grid; gap: 3px; font-size: 12px; color: var(--muted); min-width: 0; }
 .qp .plain { padding: 8px; font-size: 15px; }
 .qp .x { background: none; border: 0; color: var(--muted); font-size: 22px; cursor: pointer; height: 38px; }
@@ -518,7 +522,18 @@ details.break > summary { font-size: 15px; padding: 6px 0; color: var(--ink); fo
         <label class="f">Job name<input type="text" id="q-name" class="plain" maxlength="80" placeholder="e.g. Custom die rack, 8 hole"></label>
         <label class="f">Customer<small>optional</small><input type="text" id="q-cust" class="plain" maxlength="60" placeholder="First name"></label>
       </div>
-      <label class="f">Material<select id="q-mat" class="plain"></select></label>
+      <label class="f">Filament<select id="q-mat" class="plain"></select></label>
+      <button class="ghost" id="q-newfil" type="button" style="justify-self:start">+ Add my own filament</button>
+      <div class="addsale" id="q-filform" hidden>
+        <label class="f">Filament name<small>brand, type, color</small><input type="text" id="qf-name" class="plain" maxlength="40" placeholder="e.g. Polymaker PLA Pro, Black"></label>
+        <div class="row2">
+          <label class="f">Spool price<small>what you paid, with shipping</small><div class="money"><input id="qf-price" inputmode="decimal" placeholder="0.00"></div></label>
+          <label class="f">Spool weight<small>grams of filament</small><input id="qf-g" class="plain" inputmode="decimal" value="1000"></label>
+        </div>
+        <div class="answer" id="qf-out">Enter the spool price.</div>
+        <div class="actions"><button class="btn" id="qf-save" type="button">Save filament</button><button class="ghost" id="qf-cancel" type="button">Cancel</button></div>
+        <p class="msg" id="qf-msg" hidden></p>
+      </div>
       <div id="q-parts"></div>
       <button class="ghost" id="q-addpart" type="button">+ Add a part</button>
       <div class="row2">
@@ -571,7 +586,7 @@ details.break > summary { font-size: 15px; padding: 6px 0; color: var(--ink); fo
       <details class="costs">
         <summary><h2>Quote rates</h2></summary>
         <div class="inner2">
-          <p class="hint tip">Used for every quote. Your time is counted as a cost, so the profit shown is on top of paying yourself.</p>
+          <p class="hint tip">Used for every quote. Tap a filament's name or price to change it. Your time is counted as a cost, so the profit shown is on top of paying yourself.</p>
           <div id="q-mats"></div>
           <div class="row2">
             <label class="f">Printer cost per hour<small>power + wear + nozzles</small><div class="money"><input id="qr-machine" inputmode="decimal"></div></label>
@@ -1611,8 +1626,13 @@ if (store.get("tab", "calc") === "pricing") renderSale();
   };
   const QR = { ...QR_DEFAULTS, ...store.get("quoteRates", {}) };
   if (!Array.isArray(QR.mats) || !QR.mats.length) QR.mats = QR_DEFAULTS.mats.map(m => ({ ...m }));
+  QR.mats.forEach((m, i) => { if (!m.id) m.id = "m" + i; });
+  // quotes saved before filaments had ids stored the list position instead
+  const matId = v => (typeof v === "number" ? (QR.mats[v] || QR.mats[0]).id : (QR.mats.some(m => m.id === v) ? v : QR.mats[0].id));
+  const matOf = v => QR.mats.find(m => m.id === matId(v)) || QR.mats[0];
   const blank = () => ({ name: "", cust: "", mat: 0, parts: [{ n: "", g: "", min: "", q: 1 }], n: 1, hw: "", design: "", finish: "", ship: "", pay: "website", shipped: true, margin: 40, price: "", lead: 7, valid: 14, showBreaks: false });
   let Q = { ...blank(), ...store.get("quoteDraft", {}) };
+  Q.mat = matId(Q.mat);
   let quotes = store.get("quotes", []);
   let editingId = store.get("quoteEditing", null);
   const roundUp = (v, step) => Math.ceil(v / step - 1e-9) * step;
@@ -1629,7 +1649,7 @@ if (store.get("tab", "calc") === "pricing") renderSale();
   /* ---- the math ---- */
   function compute(q, units) {
     const N = Math.max(1, Math.round(units != null ? units : num(q.n)) || 1);
-    const mat = QR.mats[q.mat] || QR.mats[0];
+    const mat = matOf(q.mat);
     const grams = q.parts.reduce((t, p) => t + num(p.g) * Math.max(0, num(p.q)), 0);       // per unit
     const mins = q.parts.reduce((t, p) => t + num(p.min) * Math.max(0, num(p.q)), 0);      // per unit
     const fail = 1 + Math.max(0, QR.fail) / 100;
@@ -1663,8 +1683,8 @@ if (store.get("tab", "calc") === "pricing") renderSale();
 
   /* ---- rendering ---- */
   function renderMatSelect() {
-    $("q-mat").innerHTML = QR.mats.map((m, i) => `<option value="${i}">${esc(m.n)} · $${m.kg.toFixed(2)}/kg</option>`).join("");
-    $("q-mat").value = String(Math.min(Q.mat, QR.mats.length - 1));
+    $("q-mat").innerHTML = QR.mats.map(m => `<option value="${m.id}">${esc(m.n)} · $${m.kg.toFixed(2)}/kg</option>`).join("");
+    Q.mat = matId(Q.mat); $("q-mat").value = Q.mat;
   }
   function renderParts() {
     $("q-parts").innerHTML = Q.parts.map((p, i) => `<div class="qp" data-i="${i}">
@@ -1682,7 +1702,7 @@ if (store.get("tab", "calc") === "pricing") renderSale();
     $("q-shipped").checked = !!Q.shipped; $("q-showbreaks").checked = !!Q.showBreaks;
   }
   function readForm() {
-    Q.name = $("q-name").value; Q.cust = $("q-cust").value; Q.mat = Number($("q-mat").value) || 0; Q.n = $("q-n").value;
+    Q.name = $("q-name").value; Q.cust = $("q-cust").value; Q.mat = matId($("q-mat").value); Q.n = $("q-n").value;
     Q.hw = $("q-hw").value; Q.design = $("q-design").value; Q.finish = $("q-finish").value; Q.ship = $("q-ship").value;
     Q.pay = $("q-pay").value; Q.margin = $("q-margin").value; Q.price = $("q-price").value; Q.lead = $("q-lead").value; Q.valid = $("q-valid").value;
     Q.shipped = $("q-shipped").checked; Q.showBreaks = $("q-showbreaks").checked;
@@ -1812,7 +1832,7 @@ if (store.get("tab", "calc") === "pricing") renderSale();
     const card = e.target.closest(".qsv"); if (!card) return;
     const s = quotes.find(x => x.id === card.dataset.id); if (!s) return;
     if (e.target.closest("[data-open]")) {
-      Q = { ...blank(), ...JSON.parse(JSON.stringify(s.q)) }; editingId = s.id; store.set("quoteEditing", editingId);
+      Q = { ...blank(), ...JSON.parse(JSON.stringify(s.q)) }; Q.mat = matId(Q.mat); editingId = s.id; store.set("quoteEditing", editingId);
       fillForm(); render(); window.scrollTo(0, 0); return;
     }
     if (e.target.closest("[data-qdel]")) {
@@ -1840,8 +1860,7 @@ if (store.get("tab", "calc") === "pricing") renderSale();
 
   /* ---- rates ---- */
   function renderRates() {
-    $("q-mats").innerHTML = `<h2>Filament price per kg</h2>` + QR.mats.map((m, i) => `<div class="pc" data-mi="${i}"><div class="nm"><input class="plain" data-mk="n" maxlength="30" value="${esc(m.n)}" aria-label="Material name"></div><div class="money"><input inputmode="decimal" data-mk="kg" value="${m.kg.toFixed(2)}" aria-label="Price per kg"></div></div>`).join("") +
-      `<button class="ghost" type="button" id="q-addmat" style="justify-self:start">+ Add a material</button>`;
+    $("q-mats").innerHTML = `<h2>Your filaments · price per kg</h2>` + QR.mats.map((m, i) => `<div class="qmat" data-mi="${i}"><input class="plain" data-mk="n" maxlength="40" value="${esc(m.n)}" aria-label="Filament name"><div class="money"><input inputmode="decimal" data-mk="kg" value="${m.kg.toFixed(2)}" aria-label="Price per kg"></div><button type="button" class="x" data-mdel="${i}" aria-label="Remove ${esc(m.n)}"${QR.mats.length < 2 ? " hidden" : ""}>×</button></div>`).join("");
     const set = { "qr-machine": QR.machine, "qr-fail": QR.fail, "qr-design": QR.design, "qr-labor": QR.labor, "qr-min": QR.min, "qr-ppp": QR.ppp, "qr-ppf": QR.ppf };
     for (const [id, v] of Object.entries(set)) $(id).value = v;
     $("qr-round").value = String(QR.round);
@@ -1859,11 +1878,37 @@ if (store.get("tab", "calc") === "pricing") renderSale();
     store.set("quoteRates", QR); renderMatSelect(); render();
   });
   $("q-mats").addEventListener("click", e => {
-    if (e.target.id !== "q-addmat") return;
-    QR.mats.push({ n: "New material", kg: 20 }); store.set("quoteRates", QR); renderRates(); renderMatSelect();
+    const b = e.target.closest("[data-mdel]"); if (!b || QR.mats.length < 2) return;
+    if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Delete?"; b.style.fontSize = "13px"; setTimeout(() => { if (b.isConnected) { b.dataset.confirm = ""; b.textContent = "×"; b.style.fontSize = ""; } }, 4000); return; }
+    QR.mats.splice(Number(b.dataset.mdel), 1); store.set("quoteRates", QR); renderRates(); renderMatSelect(); render();
   });
   $("qr-reset").addEventListener("click", () => {
-    Object.assign(QR, JSON.parse(JSON.stringify(QR_DEFAULTS))); store.set("quoteRates", QR); renderRates(); renderMatSelect(); render();
+    // resets the rates only; your filaments stay
+    const mats = QR.mats; Object.assign(QR, JSON.parse(JSON.stringify(QR_DEFAULTS))); QR.mats = mats;
+    store.set("quoteRates", QR); renderRates(); renderMatSelect(); render();
+  });
+
+  /* ---- add your own filament ---- */
+  const perKg = () => { const g = num($("qf-g").value); return g > 0 ? num($("qf-price").value) / g * 1000 : 0; };
+  function filPreview() {
+    const k = perKg(), g = num($("qf-g").value);
+    $("qf-out").innerHTML = num($("qf-price").value) > 0 && g > 0 ? `That's <b>${money(k)} per kg</b> · ${money(k / 1000 * 100)} per 100 g` : "Enter the spool price.";
+  }
+  $("q-newfil").addEventListener("click", () => {
+    $("qf-name").value = ""; $("qf-price").value = ""; $("qf-g").value = "1000"; $("qf-msg").hidden = true; filPreview();
+    $("q-filform").hidden = false; $("q-newfil").hidden = true; $("qf-name").focus();
+  });
+  $("qf-cancel").addEventListener("click", () => { $("q-filform").hidden = true; $("q-newfil").hidden = false; });
+  ["qf-price", "qf-g"].forEach(id => $(id).addEventListener("input", filPreview));
+  $("qf-save").addEventListener("click", () => {
+    const n = $("qf-name").value.trim(), k = perKg();
+    if (!n) return msg($("qf-msg"), "Give the filament a name.");
+    if (!(k > 0)) return msg($("qf-msg"), "Enter the spool price and weight.");
+    if (QR.mats.length >= 60) return msg($("qf-msg"), "That's the most filaments the list can hold. Remove one under Quote rates.");
+    const m = { id: "f" + Date.now().toString(36), n, kg: Math.round(k * 100) / 100 };
+    QR.mats.push(m); store.set("quoteRates", QR);
+    Q.mat = m.id; renderRates(); renderMatSelect(); render();
+    $("q-filform").hidden = true; $("q-newfil").hidden = false;
   });
 
   /* ---- form events ---- */
